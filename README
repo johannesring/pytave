@@ -29,6 +29,15 @@ Linked and tested with:
     Boost::Python 1.33
     Octave 3.0.2
 
+Bootstraping from Bazaar trunk
+==============================
+
+  1. `bzr branch lp:pytave'
+
+  2. `autoreconf --install'
+
+  3. `./configure'
+
 Autotools
 =========
 
