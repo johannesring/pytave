@@ -1,0 +1,41 @@
+#!/usr/bin/python
+# -*- coding: utf-8; c-basic-offset: 3; indent-tabs-mode: nil; tab-width: 3; -*-
+# @configure_input@
+
+from distutils.core import setup, Extension
+
+setup(
+   name = 'pytave',
+   version = '@PACKAGE_VERSION@',
+   author = '@PACKAGE_NAME@ team',
+   author_email = '@PACKAGE_BUGREPORT@',
+   package_dir = {'pytave' : '@srcdir@/package'},
+   packages = ['pytave'],
+   ext_modules = [
+      Extension('pytave/_pytave',
+         language = "c++",
+         sources = [
+         '@srcdir@/octave_to_python.cc',
+         '@srcdir@/pytave.cc',
+         '@srcdir@/exceptions.cc',
+         '@srcdir@/python_to_octave.cc',
+         ],
+         depends = [
+         '@srcdir@/arrayobjectdefs.h',
+         '@srcdir@/config.h',
+         '@srcdir@/octave_to_python.h',
+         '@srcdir@/pytavedefs.h',
+         '@srcdir@/exceptions.h',
+         '@srcdir@/python_to_octave.h'
+         ],
+         
+         # TODO: Check whether paths work on Windows or not.
+         # The file separator might be wrong. (Must be / in setup.cfg)
+         include_dirs = ['@PYTAVE_OCTAVE_INCLUDE_PATH@', '@abs_builddir@', '@srcdir@'], # Python always included.
+         define_macros = [('HAVE_CONFIG_H', '1')],
+         library_dirs = ['@PYTAVE_OCTAVE_RPATH@'],
+         runtime_library_dirs = ['@PYTAVE_OCTAVE_RPATH@'],
+         libraries = ['octinterp', 'octave', 'cruft', '@BOOST_PYTHON_LIB@']
+      )
+   ]  
+)

@@ -1,0 +1,141 @@
+pytave README
+*************
+
+Building instructions
+=====================
+
+You can use either Python distutils, GNU Automake or Boost BJam to
+build pytave. The configure script outputs files for all these build
+systems. Autoconf's VPATH is supported on all build systems.
+
+    Use the configure script to set up Octave and Boost::Python
+paths. Run `./configure --help' for more info. There are two custom
+arguments that control building of pytave, `--with-octave' and
+`--with-boost-python'.
+
+Dependencies
+============
+
+Configuring:
+	an sh shell capable of running `configure'
+
+Building:
+	Python's distutils or
+	make or
+	BJam
+
+Linked and tested with:
+    Python 2.4
+    Boost::Python 1.33
+    Octave 3.0.2
+
+Autotools
+=========
+
+The Autotools build system need not be installed to build the
+module. You need `make' and all library dependencies though.
+
+  1. Create the `Makefile' by typing:
+	 `./configure --prefix=/directory/where/you/want/the/module/file'
+
+  2. Type `make' to build the extention module.
+
+  3. To copy the pytave dynamic library to the prefix, type
+     `make install'
+
+BJam
+====
+
+BJam must be installed in order to build the module. You also need a
+proper `user-config.jam' file in your home directory.
+
+  1. Create `Jamfile' and `project-root.jam' by typing `./configure'
+
+  2. Use your `bjam' command to build the extention module. 
+
+user-config.jam
+===============
+
+For your convenience, here the content of a typical ~/user-config.jam
+on a GNU/Linux system:
+
+using gcc ;
+using python : 2.5 ;
+
+Distutils
+=========
+
+  1. Create the `setup.py' file by typing `./configure'
+
+  2. Run `python setup.py build' to build and package the extention
+     module together with the pure Python files.
+
+Running from build directory
+============================
+
+Pytave is made up of three parts. The `pytave' package, the
+`pytave/pytave' module and the `pytave/_pytave' extention. When the
+user uses `import pytave', the pytave package __init__ script loads
+both the module and the extention. It is important that they both can
+be found. 
+
+  1. Follow the Distutils build instructions. A complete Python
+     package directory called `pytave' is created in
+     `build/lib.something'
+
+  2. Start the Python interactive interpreter with
+     `PYTHONPATH=build/lib.linux-i686-2.4/ python' (with appropiate
+     changes for your system.)
+
+  3. In the interpreter you can now access Octave through Python:
+
+import pytave
+import Numeric
+pytave.feval(1, "cos", 0)
+b = pytave.addpath(".")
+pytave.feval(1, "testfile", 42)
+
+     (Observe that there is a testfile.m file in the distribution.)
+
+    Using BJam or Automake instead of Distutils, you load the
+`pytave/pytave' module and the extention instead of the whole
+package. Using `import pytave' now calls the module directly, but the
+difference is transparent to the user.
+
+    Basically all you want to do is load Python with shared library
+for the pytave extention (called `pytave/_pytave') and the native
+`pytave/pytave' module. BJam creates shared library in the
+`bin/something/something' directory, while Autotools hide a working
+shared library in the `.libs' directory. The contents of the `pytave'
+package is stored in the directory `package' of the source
+package. This is an example for an Autotools build.
+
+  1. Follow the Autotools build instructions.
+
+  2. Start the Python interpreter with a Python path set to a path
+     containing `_pytave.so' and the `package' directory. A common way
+     to do this with the bash shell is to execute this command:
+     `PYTHONPATH=.libs:package python'.
+
+Installing with distutils
+=========================
+
+  1. Run `python setup.py install'
+
+Creating a source dist
+======================
+
+  1. Run `make distcheck'
+
+Hint about foreign systems
+==========================
+
+If you are running on a system incapable of executing the configure
+scripts (e.g. a Microsoft Windows system), you may want to try
+installing the `MinGW' and `MSYS' packages, and build everything
+inside that environment. This isn't for the faint of hearted though,
+since you need/want to build Octave too. It is probably easier than
+trying to build without configure scripts, that's all. There are no
+guarentees that it will build at all, it has not been tested.
+
+EOF.

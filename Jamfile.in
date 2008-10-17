@@ -1,0 +1,19 @@
+# @configure_input@
+
+project py : 
+	requirements 
+	<library>/usr/lib/lib@BOOST_PYTHON_LIB@.so  
+	<library>@JAM_LIBOCTAVE@
+	<library>@JAM_LIBCRUFT@
+	<library>@JAM_LIBOCTINTERP@
+	<include>@PYTHON_INCLUDE_DIR@
+	<include>@PYTAVE_OCTAVE_INCLUDE_PATH@
+	<include>@abs_srcdir@
+	<include>@abs_builddir@
+	<define>"HAVE_CONFIG_H"
+	<linkflags>"-Wl,-rpath -Wl,@PYTAVE_OCTAVE_RPATH@"
+ 	<cxxflags>"-Wall"
+;
+
+python-extension _pytave : @srcdir@/octave_to_python.cc @srcdir@/pytave.cc @srcdir@/exceptions.cc @srcdir@/python_to_octave.cc @srcdir@/arrayobjectdefs.h @srcdir@/config.h @srcdir@/octave_to_python.h @srcdir@/pytavedefs.h @srcdir@/pytave_exception.h @srcdir@/python_to_octave.h ;
+
