@@ -1,3 +1,11 @@
+2008-10-23  David Grundberg  <individ@acc.umu.se>
+
+	* pytave.cc: Use octave_main() to initialize Octave. Introduces
+	readline history clashes with interactive Python interpreter.
+	* configure.ac: Better testing for Python dependencies.
+	* configure.ac: Renamed my_ to pytave_
+	* configure.ac: Fixed whitespace.
+
 2008-10-20  David Grundberg  <individ@acc.umu.se>
 
 	* Makefile.am: added test/exceptions.py to extra dist.

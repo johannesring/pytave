@@ -22,10 +22,9 @@ AC_MSG_CHECKING([for Octave package])
 AC_ARG_WITH([octave],
             [AS_HELP_STRING([--with-octave],
                             [Optionally set Octave package to use.
-							@<:@default=check@:>@])],
+                            @<:@default=check@:>@])],
             [with_octave=$withval],
             [with_octave=check])
-          
 AS_IF([test "x$with_octave" == xno],
 [
    AC_MSG_FAILURE([--without-octave was given but Octave required])
@@ -48,8 +47,7 @@ AS_IF([test "x$octaveconfig" == "xeepnotfound"],
 [
    AC_MSG_WARN([Could not find octave-config.])
 ],
-[ 
-
+[
    PYTAVE_OCTAVE_RPATH=`$octaveconfig -p OCTLIBDIR`
    PYTAVE_OCTAVE_INCLUDE_PATH=`$octaveconfig -p OCTINCLUDEDIR`
    AC_MSG_RESULT([  results of the Octave check:])
@@ -67,15 +65,17 @@ AS_IF([test "x$octaveconfig" == "xeepnotfound"],
    old_libs="$LIBS"
    LIBS="-loctave -lcruft -loctinterp $LIBS"
 
-   AC_CACHE_CHECK([whether linking to Octave library works], [my_cv_lib_octave],
+   AC_CACHE_CHECK([whether linking to Octave library works], [pytave_cv_lib_octave],
    [
-      my_cv_lib_octave=no
-	  AC_LANG_ASSERT(C++)
-	  AC_LINK_IFELSE(AC_LANG_PROGRAM([[#include <octave/oct.h>
-									   #include <octave/Matrix.h> ]],
-									 [[MatrixType()]]),
-						   [my_cv_lib_octave=yes],
-						   [my_cv_lib_octave=no])
+      pytave_cv_lib_octave=no
+      AC_LANG_ASSERT(C++)
+      AC_LINK_IFELSE(
+         AC_LANG_PROGRAM(
+            [[#include <octave/oct.h>
+              #include <octave/Matrix.h> ]],
+            [[MatrixType()]]),
+         [pytave_cv_lib_octave=yes],
+         [pytave_cv_lib_octave=no])
    ])
 
 
@@ -88,21 +88,25 @@ AS_IF([test "x$octaveconfig" == "xeepnotfound"],
 
 # Look for boost::python
 AX_PYTHON()
+old_libs="$LIBS"
+AS_IF([test "x$PYTHON_LIB" != "x"],[
+LIBS="-l$PYTHON_LIB $LIBS"
+],[])
 AX_BOOST_PYTHON()
+LIBS="$old_libs"
 
 # Now check the two vital libs, if they have problems, halt.
 pytave_fatal_errors=no
 
-AS_IF(test "x$my_cv_lib_octave" != "xyes",
+AS_IF(test "x$pytave_cv_lib_octave" != "xyes",
 [
    AC_MSG_WARN([Linking to Octave failed.])
    pytave_fatal_errors=yes
 ], [])
 
-# XXX: hohoho, this is ugly.
-AS_IF(test "x$ac_cv_boost_python" != "xyes",
+AS_IF(test "x$BOOST_PYTHON_LIB" == "x",
 [
-   AC_MSG_WARN([Boost::Python test failed.])
+   AC_MSG_WARN([Cannot find Boost::Python lib.])
    pytave_fatal_errors=yes
 ], [])
 
@@ -125,7 +129,6 @@ AC_PROG_LN_S
 AC_PROG_MAKE_SET
 
 # Checks for libraries.
-		  
 
 # Checks for header files.
 
@@ -141,7 +144,7 @@ AS_IF(test "x${prefix}" == "xNONE",
    PYTAVE_MODULE_INSTALL_PATH=/../invalidpath,
 ],
 [
-   PYTAVE_MODULE_INSTALL_PATH=${prefix}  
+   PYTAVE_MODULE_INSTALL_PATH=${prefix}
 ])
 
 # Substitutes for the Makefile/Jamfile

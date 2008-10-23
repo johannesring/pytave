@@ -24,20 +24,13 @@
 
 #undef HAVE_STAT /* Both boost.python and octave define HAVE_STAT... */
 #include <octave/oct.h>
+#include <octave/octave.h>
+#include <octave/ov.h>
 #include <octave/parse.h>
-#include <octave/load-path.h>
-#include <octave/file-io.h>
-#include <octave/ops.h>
 
 #include <iostream>
 #include <sstream>
-
 #include <sys/types.h>
-
-#include <octave/Matrix.h>
-#include <octave/ov.h>
-#include <octave/builtins.h>
-#include <octave/defaults.h>
 
 #include "pytavedefs.h"
 
@@ -59,27 +52,16 @@ namespace pytave { /* {{{ */
          return;
       }
 
-      set_liboctave_error_handler(error);
-      set_liboctave_warning_handler(warning);
-      set_liboctave_warning_with_id_handler(warning_with_id);
+      // Initialize Octave.
+      // Also print Octave startup message.
+      char* argv[] = {"octave", "--no-line-editing", "--no-history", NULL};
+      octave_main(3, argv, 1);
 
-      // New in Octave 3
-      initialize_default_warning_state();
+      // Initialize Python Numeric Array
 
-      install_defaults();
-      initialize_file_io();
-      initialize_symbol_tables();
-      install_types();
-
-      install_ops();
-
-      install_builtins();
-
-      // true argument new in Octave 3
-      load_path::initialize(true); // or use false to set empty path
-
-      // initialize python numeric array
-      import_array();
+      // This is actually a macro that becomes a block expression. If an error
+      // occurs, e.g. Numeric Array not installed, an exception is set.
+      import_array()
    }
 
    boost::python::tuple get_exceptions() {
