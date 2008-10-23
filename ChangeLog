@@ -1,3 +1,9 @@
+2008-10-xx  David Grundberg <individ@acc.umu.se>
+
+	* configure.ac: Better testing for Python dependencies.
+	* configure.ac: Renamed my_ to pytave_
+	* configure.ac: Fixed whitespace.
+
 2008-10-20  David Grundberg  <individ@acc.umu.se>
 
 	* Makefile.am: added test/exceptions.py to extra dist.
