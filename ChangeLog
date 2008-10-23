@@ -1,5 +1,6 @@
 2008-10-xx  David Grundberg <individ@acc.umu.se>
 
+	* pytave.cc: Use octave_main() to initialize Octave.
 	* configure.ac: Better testing for Python dependencies.
 	* configure.ac: Renamed my_ to pytave_
 	* configure.ac: Fixed whitespace.
