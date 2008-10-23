@@ -53,16 +53,9 @@ namespace pytave { /* {{{ */
       }
 
       // Initialize Octave.
-      if (Py_FdIsInteractive(stdin, NULL)) {
-         // Print Octave interactive message.
-         char* argv[] = {"octave", "--no-line-editing", "--no-history", NULL};
-         octave_main(3, argv, 1);
-      } else {
-         // One may use -q to surpress the startup greeting.
-         char* argv[] = {"octave", "-q", "--no-line-editing",
-                         "--no-history", NULL};
-         octave_main(4, argv, 1);
-      }
+      // Also print Octave startup message.
+      char* argv[] = {"octave", "--no-line-editing", "--no-history", NULL};
+      octave_main(3, argv, 1);
 
       // Initialize Python Numeric Array
 
