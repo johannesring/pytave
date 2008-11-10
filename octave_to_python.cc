@@ -71,7 +71,7 @@ namespace pytave {
    }
 
    template <>
-   static void copy_octarray_to_pyarrobj<double, NDArray>(
+   void copy_octarray_to_pyarrobj<double, NDArray>(
                                   PyArrayObject *pyarr,
                                   const NDArray &matrix,
                                   const unsigned int matindex,
@@ -100,7 +100,7 @@ namespace pytave {
 
 #ifdef PYTAVE_USE_OCTAVE_FLOATS
    template <>
-   static void copy_octarray_to_pyarrobj<float, FloatNDArray>(
+   void copy_octarray_to_pyarrobj<float, FloatNDArray>(
                                   PyArrayObject *pyarr,
                                   const FloatNDArray &matrix,
                                   const unsigned int matindex,
