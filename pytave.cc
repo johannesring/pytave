@@ -24,6 +24,7 @@
 
 #undef HAVE_STAT /* Both boost.python and octave define HAVE_STAT... */
 #include <octave/oct.h>
+#include <octave/oct-map.h>
 #include <octave/octave.h>
 #include <octave/ov.h>
 #include <octave/parse.h>
@@ -95,12 +96,40 @@ namespace pytave { /* {{{ */
 //  1 general error
          int parse_status = 0;
          reset_error_handler();
-         octave_value_list tmp = eval_string("lasterror.message",
-                                             true, parse_status, 1);
-         if (!tmp.empty() && tmp(0).is_string())
-            throw octave_error_exception(tmp(0).string_value());
-         else
-            throw octave_error_exception("");
+         octave_value_list lasterror = eval_string("lasterror",
+                                                   true, parse_status, 1);
+         if (!lasterror.empty() && lasterror(0).is_map()) {
+            ostringstream exceptionmsg;
+            Octave_map map = lasterror(0).map_value();
+            string message = map.stringfield("message", "");
+            string identifier = map.stringfield("identifier", "");
+            Cell stackCell = map.contents("stack");
+
+            // Trim trailing new lines
+            message = message.substr(0, message.find_last_not_of("\r\n") + 1);
+
+            if (!stackCell.is_empty() && stackCell(0).is_map()) {
+               // The struct element is called "stack" but only contain
+               // info about the top frame.
+               Octave_map stack = stackCell(0).map_value();
+               string file = stack.stringfield("file", "d");
+               string name = stack.stringfield("name", "a");
+               int line = stack.intfield("line", 1);
+               int column = stack.intfield("column", 2);
+
+               exceptionmsg << file << ":" << line << ":" << column << ": ";
+               if (!name.empty())
+                  exceptionmsg << "in '" << name << "': ";
+            }
+
+            if (!identifier.empty()) {
+               exceptionmsg << "(identifier: " << identifier << ") ";
+            }
+            exceptionmsg << message;
+
+            throw octave_error_exception(exceptionmsg.str());
+         } else
+            throw octave_error_exception("No Octave error available");
       }
 
       if (nargout > 0) {
