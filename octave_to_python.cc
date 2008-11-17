@@ -24,6 +24,7 @@
 #include <octave/oct.h>
 #include <octave/Matrix.h>
 #include <octave/ov.h>
+#include <octave/oct-map.h>
 
 #include <iostream>
 #include "pytavedefs.h"
@@ -41,6 +42,9 @@ using namespace std;
 using namespace boost::python;
 
 namespace pytave {
+
+   void octvalue_to_pyobj(boost::python::object &py_object,
+                          const octave_value& octvalue);
 
    template <class PythonPrimitive, class OctaveBase>
    static void copy_octarray_to_pyarrobj(
@@ -250,6 +254,40 @@ namespace pytave {
       py_object = object(handle<PyObject>((PyObject *)pyarr));
    }
 
+
+   static void octcell_to_pyobject(boost::python::object &py_object,
+                                    const Cell& cell) {
+      py_object = boost::python::list();
+
+      if(cell.dim1() != 1) {
+         throw value_convert_exception(
+               "Only one dimensional cell arrays are allowed, "
+               "conversion not implemented");
+      }
+
+      for(octave_idx_type i = 0 ; i < cell.length(); i++) {
+         boost::python::object py_val;
+
+         octvalue_to_pyobj(py_val, cell.elem(i));
+
+         ((boost::python::list&)py_object).insert(i, py_val);
+      }
+   }
+
+   static void octmap_to_pyobject(boost::python::object &py_object,
+                                  const Octave_map& map) {
+      py_object = boost::python::dict();
+      string_vector keys = map.keys();
+
+      for(octave_idx_type i = 0 ; i < keys.length(); i++) {
+         boost::python::object py_val;
+
+         octvalue_to_pyobj(py_val, map.contents(keys[i]));
+
+         py_object[keys[i]] = py_val;
+      }
+   }
+
    void octvalue_to_pyobj(boost::python::object &py_object,
                           const octave_value& octvalue) {
       if (octvalue.is_scalar_type()) {
@@ -266,6 +304,10 @@ namespace pytave {
          py_object = str(octvalue.string_value());
       else if (octvalue.is_matrix_type())
          octvalue_to_pyarr(py_object, octvalue);
+      else if (octvalue.is_map())
+         octmap_to_pyobject(py_object, octvalue.map_value());
+      else if (octvalue.is_cell())
+         octcell_to_pyobject(py_object, octvalue.cell_value());
       else if (octvalue.is_undefined())
          throw value_convert_exception(
             "Octave value `undefined'. Can not convert to a Python object");
@@ -285,8 +327,9 @@ namespace pytave {
       }
       python_tuple = tuple(seq);
    }
-}
 
+   
+}
 /* Emacs
  * Local Variables:
  * fill-column:79
