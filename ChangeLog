@@ -1,9 +1,14 @@
--*- coding:utf-8 -*-
+2008-11-17  Håkan Fors Nilsson  <c03hfn@cs.umu.se>
 
-2008-11-10  Håkan Fors Nilsson  <c04hfn@cs.umu.se>
+	* octave_to_python.cc: Added functions octcell_to_pyobject and 
+	octmap_to_pyobject.
+	* python_to_octave.cc: Added functions pydict_to_octmap and 
+	pylist_to_cellarray.
 
-	* octave_to_python.cc: Added functions octcell_to_pyobject and octmap_to_pyobject.
-	* python_to_octave.cc: Added functions pydict_to_octmap and pylist_to_cellarray.
+2008-11-17  David Grundberg  <individ@acc.umu.se>
+
+	* pytave.cc: func_eval: Improved pytave.OctaveError messages, now
+	includes filename, function and line of offending m-file.
 
 2008-11-10  David Grundberg  <individ@acc.umu.se>
 
@@ -32,3 +37,8 @@
 
 	First launchpad.net check in.
 
+Local Variables:
+coding: utf-8
+fillcolumn: 72
+End:
+vim: set textwidth=72 noexpandtab :
