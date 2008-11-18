@@ -1,4 +1,4 @@
-2008-11-17  Håkan Fors Nilsson  <c03hfn@cs.umu.se>
+2008-11-17  Håkan Fors Nilsson  <c04hfn@cs.umu.se>
 
 	* octave_to_python.cc: Added functions octcell_to_pyobject and 
 	octmap_to_pyobject.
