@@ -36,7 +36,6 @@ using namespace boost::python;
 
 namespace pytave {
 
-
    void pyobj_to_octvalue(octave_value &oct_value,
                           const boost::python::object &py_object);
 
@@ -113,10 +112,9 @@ namespace pytave {
    }
 
    static void pyarr_to_octvalue(octave_value &octvalue,
-         const PyArrayObject *pyarr) {
+                                 const PyArrayObject *pyarr) {
       if (pyarr->nd < 1)
          throw object_convert_exception("Less than 1 dimensions not supported");
-
       dim_vector dims;
       switch (pyarr->nd) {
          case 1:
@@ -188,35 +186,32 @@ namespace pytave {
       }
    }
 
-   static void pylist_to_cellarray(octave_value &oct_value, 
-         const boost::python::list &list) {
-   
+   static void pylist_to_cellarray(octave_value &oct_value,
+                                   const boost::python::list &list) {
+
       size_t length = boost::python::extract<size_t>(list.attr("__len__")());
       octave_value_list values;
 
       for(octave_idx_type i = 0; i < length; i++) {
-         octave_value val; 
+         octave_value val;
 
          pyobj_to_octvalue(val, list[i]);
          values.append(val);
 
       }
-   
+
       oct_value = Cell(values);
    }
 
+   static void pydict_to_octmap(octave_value &oct_value,
+                                const boost::python::dict &dict) {
 
-
-   static void pydict_to_octmap(octave_value &oct_value, 
-         const boost::python::dict &dict) {
-      
       boost::python::list list = dict.items();
       size_t length = boost::python::extract<size_t>(list.attr("__len__")());
 
       dim_vector dims = dim_vector(1, 1);
 
-      bool has_dimensions = false; 
-
+      bool has_dimensions = false;
 
       for(octave_idx_type i = 0; i < length; i++) {
          octave_value val;
@@ -245,7 +240,6 @@ namespace pytave {
          }
       }
 
-
       Octave_map map = Octave_map(dims);
 
       for(octave_idx_type i = 0; i < length; i++) {
@@ -255,7 +249,7 @@ namespace pytave {
          boost::python::tuple tuple =
             boost::python::extract<boost::python::tuple>(list[i])();
 
-         boost::python::extract<std::string> str(tuple[0]); 
+         boost::python::extract<std::string> str(tuple[0]);
          if(!str.check()) {
             throw object_convert_exception(
                   "Keys in the python dictionaries must be strings");
@@ -276,13 +270,11 @@ namespace pytave {
                map.assign(key, c);
          }
       }
-
       oct_value = map;
     }
 
-
    void pyobj_to_octvalue(octave_value &oct_value,
-         const boost::python::object &py_object) {
+                          const boost::python::object &py_object) {
       extract<int> intx(py_object);
       extract<double> doublex(py_object);
       extract<string> stringx(py_object);
@@ -311,15 +303,13 @@ namespace pytave {
    }
 
    void pytuple_to_octlist(octave_value_list &octave_list,
-         const boost::python::tuple &python_tuple) {
+                           const boost::python::tuple &python_tuple) {
       int length = extract<int>(python_tuple.attr("__len__")());
 
       for (int i = 0; i < length; i++) {
          pyobj_to_octvalue(octave_list(i), python_tuple[i]);
       }
    }
-
-
 }
 
 /* Emacs

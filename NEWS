@@ -1,9 +1,9 @@
-Version 0.1 bzr 
+Version 0.1-bzr 
 
 * Added functionality for one dimensional cell arrays. Python list represents
 a one dimensional cell array. Pytave will throw an exception if a cell array 
 has higher dimensions. 
 
-* Added functionality for structs, a Octave struct is represented by a python
-dictionary. The implementation tries to be as true as possible to Octaves 
+* Added functionality for structs, a Octave struct is represented by a Python
+dictionary. The implementation tries to be as true as possible to Octave's 
 struct constructor. 

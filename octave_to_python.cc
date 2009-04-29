@@ -175,7 +175,7 @@ namespace pytave {
 
    template <class CLASS, size_t bytes>
    inline static PyArrayObject *create_sint_array(CLASS value) {
-      if (bytes == sizeof(long)) { 
+      if (bytes == sizeof(long)) {
          return create_array<long, CLASS>(value, PyArray_LONG);
       } else if (bytes == sizeof(int)) {
          return create_array<signed int, CLASS>(value, PyArray_INT);
@@ -256,7 +256,7 @@ namespace pytave {
 
 
    static void octcell_to_pyobject(boost::python::object &py_object,
-                                    const Cell& cell) {
+                                   const Cell& cell) {
       py_object = boost::python::list();
 
       if(cell.dim1() != 1) {
@@ -327,9 +327,8 @@ namespace pytave {
       }
       python_tuple = tuple(seq);
    }
-
-   
 }
+
 /* Emacs
  * Local Variables:
  * fill-column:79
