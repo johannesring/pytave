@@ -38,8 +38,9 @@ namespace pytave {
    class octave_error_exception {
       public:
          static bool init() {
-            excclass = PyErr_NewException("pytave.OctaveError",
-                                          PyExc_RuntimeError, NULL);
+            excclass = PyErr_NewException(
+               const_cast<char*>("pytave.OctaveError"),
+               PyExc_RuntimeError, NULL);
             return excclass != NULL;
          };
          static void translate_exception(octave_error_exception const &py_ex) {
@@ -57,8 +58,9 @@ namespace pytave {
    class value_convert_exception {
       public:
          static bool init() {
-            excclass = PyErr_NewException("pytave.ValueConvertError",
-                                          PyExc_TypeError, NULL);
+            excclass = PyErr_NewException(
+               const_cast<char*>("pytave.ValueConvertError"),
+               PyExc_TypeError, NULL);
             return excclass != NULL;
          };
          static void translate_exception(value_convert_exception const &py_ex) {
@@ -75,8 +77,9 @@ namespace pytave {
    class object_convert_exception {
       public:
          static bool init() {
-            excclass = PyErr_NewException("pytave.ObjectConvertError",
-                                          PyExc_TypeError, NULL);
+            excclass = PyErr_NewException(
+               const_cast<char*>("pytave.ObjectConvertError"),
+               PyExc_TypeError, NULL);
             return excclass != NULL;
          };
          static void translate_exception(

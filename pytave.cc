@@ -55,8 +55,11 @@ namespace pytave { /* {{{ */
 
       // Initialize Octave.
       // Also print Octave startup message.
-      char* argv[] = {"octave", "--no-line-editing", "--no-history", NULL};
-      octave_main(3, argv, 1);
+      const char* argv[] = {"octave",
+                            "--no-line-editing",
+                            "--no-history",
+                            NULL};
+      octave_main(3, const_cast<char**>(argv), 1);
 
       // Initialize Python Numeric Array
 
@@ -112,8 +115,8 @@ namespace pytave { /* {{{ */
                // The struct element is called "stack" but only contain
                // info about the top frame.
                Octave_map stack = stackCell(0).map_value();
-               string file = stack.stringfield("file", "d");
-               string name = stack.stringfield("name", "a");
+               string file = stack.stringfield("file", "");
+               string name = stack.stringfield("name", "");
                int line = stack.intfield("line", 1);
                int column = stack.intfield("column", 2);
 
