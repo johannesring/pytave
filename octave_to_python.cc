@@ -261,8 +261,7 @@ namespace pytave {
 
       if(cell.dim1() != 1) {
          throw value_convert_exception(
-               "Only one dimensional cell arrays are allowed, "
-               "conversion not implemented");
+            "Only one-dimensional (row mayor) cell arrays can be converted.");
       }
 
       for(octave_idx_type i = 0 ; i < cell.length(); i++) {
@@ -290,7 +289,10 @@ namespace pytave {
 
    void octvalue_to_pyobj(boost::python::object &py_object,
                           const octave_value& octvalue) {
-      if (octvalue.is_scalar_type()) {
+      if (octvalue.is_undefined())
+         throw value_convert_exception(
+            "Octave value `undefined'. Can not convert to a Python object");
+      else if (octvalue.is_scalar_type()) {
          if (octvalue.is_bool_type())
             py_object = object(octvalue.bool_value());
          else if (octvalue.is_real_scalar())
@@ -300,18 +302,18 @@ namespace pytave {
          else
             throw value_convert_exception(
                "Conversion for this scalar not implemented");
-      } else if (octvalue.is_string())
+      } else if (octvalue.is_string()) {
+         if (octvalue.all_strings().dim1() > 1)
+            throw value_convert_exception(
+               "Multi-row character matrices can not be converted.");
          py_object = str(octvalue.string_value());
-      else if (octvalue.is_matrix_type())
+      } else if (octvalue.is_matrix_type()) {
          octvalue_to_pyarr(py_object, octvalue);
-      else if (octvalue.is_map())
+      } else if (octvalue.is_map()) {
          octmap_to_pyobject(py_object, octvalue.map_value());
-      else if (octvalue.is_cell())
-         octcell_to_pyobject(py_object, octvalue.cell_value());
-      else if (octvalue.is_undefined())
-         throw value_convert_exception(
-            "Octave value `undefined'. Can not convert to a Python object");
-      else
+      } else if (octvalue.is_cell()) {
+         octcell_to_pyobject(py_object, octvalue.cell_value()); 
+      } else
          throw value_convert_exception(
             "Conversion from Octave value not implemented");
    }

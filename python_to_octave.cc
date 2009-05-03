@@ -224,9 +224,14 @@ namespace pytave {
          if(val.is_cell()) {
             const Cell c(val.cell_value());
 
-            if(c.dims().length() == 2 &&
-                  (c.dims()(0) >= 1 && c.dims()(1) > 1) ||
-                  (c.dims()(0) > 1 && c.dims()(1) >= 1)) {
+            // Some things are assumed since we have converted a Python list to
+            // a cell.
+            assert(c.dims().length() == 2);
+            assert(c.dim1() == 1);
+
+            // We do not bother measuring 1x1 values, since they are replicated
+            // to fill up the necessary dimensions.
+            if(c.dims().length() == 2 && c.dim1() != 1 && c.dim2() != 1) {
 
                if(!has_dimensions) {
 
@@ -234,7 +239,7 @@ namespace pytave {
                   has_dimensions = true;
                } else if(c.dims() != dims) {
                   throw object_convert_exception(
-                        "Dimensions of the parameters to struct do not match");
+                     "Dimensions of the struct fields do not match");
                }
             }
          }
@@ -252,10 +257,19 @@ namespace pytave {
          boost::python::extract<std::string> str(tuple[0]);
          if(!str.check()) {
             throw object_convert_exception(
-                  "Keys in the python dictionaries must be strings");
+               string("Can not convert key of type ")
+               + PyEval_GetFuncName(boost::python::object(tuple[0]).ptr())
+               + PyEval_GetFuncDesc(boost::python::object(tuple[0]).ptr())
+               + " to a structure field name. Field names must be strings.");
          }
 
          key = str();
+
+         if (!valid_identifier(key)) {
+            throw object_convert_exception(
+               string("Can not convert key `") + key + "' to a structure "
+               "field name. Field names must be valid Octave identifiers.");
+         }
 
          pyobj_to_octvalue(val, tuple[1]);
 
