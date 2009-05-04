@@ -9,9 +9,7 @@ build pytave. The configure script outputs files for all these build
 systems. Autoconf's VPATH is supported on all build systems.
 
     Use the configure script to set up Octave and Boost::Python
-paths. Run `./configure --help' for more info. There are two custom
-arguments that control building of pytave, `--with-octave' and
-`--with-boost-python'.
+paths. Run `./configure --help' for more info.
 
 Dependencies
 ============

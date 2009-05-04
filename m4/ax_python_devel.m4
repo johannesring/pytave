@@ -1,10 +1,10 @@
 # ===========================================================================
-#         http://www.nongnu.org/autoconf-archive/ac_python_devel.html
+#
 # ===========================================================================
 #
 # SYNOPSIS
 #
-#   AC_PYTHON_DEVEL([version])
+#   AX_PYTHON_DEVEL([version], [ACTION_IF_FOUND], [ACTION_IF_NOT_FOUND])
 #
 # DESCRIPTION
 #
@@ -12,9 +12,10 @@
 #   in your configure.ac.
 #
 #   This macro checks for Python and tries to get the include path to
-#   'Python.h'. It provides the $(PYTHON_CPPFLAGS) and $(PYTHON_LDFLAGS)
-#   output variables. It also exports $(PYTHON_EXTRA_LIBS) and
-#   $(PYTHON_EXTRA_LDFLAGS) for embedding Python in your code.
+#   'Python.h'. It provides the $(PYTHON_CPPFLAGS), $(PYTHON_LIBS) and
+#   $(PYTHON_LDFLAGS) output variables. It also exports
+#   $(PYTHON_EXTRA_LIBS) and $(PYTHON_EXTRA_LDFLAGS) for embedding
+#   Python in your code.
 #
 #   You can search for some particular version of Python by passing a
 #   parameter to this macro, for example ">= '2.3.1'", or "== '2.4'". Please
@@ -28,11 +29,15 @@
 #   PYTHON_NOVERSIONCHECK environment variable to something else than the
 #   empty string.
 #
-#   If you need to use this macro for an older Python version, please
-#   contact the authors. We're always open for feedback.
+#   As a final check, a simple test program is compiled and linked
+#   against the found Python installation.  If the check is
+#   successful, ACTION_IF_FOUND is executed, otherwise
+#   ACTION_IF_NOT_FOUND.
 #
 # LICENSE
 #
+#   Copyright (c) 2009 David Grundberg
+# Derived from http://www.nongnu.org/autoconf-archive/ac_python_devel.html
 #   Copyright (c) 2009 Sebastian Huber <sebastian-huber@web.de>
 #   Copyright (c) 2009 Alan W. Irwin <irwin@beluga.phys.uvic.ca>
 #   Copyright (c) 2009 Rafael Laboissiere <rafael@laboissiere.net>
@@ -66,7 +71,7 @@
 #   modified version of the Autoconf Macro, you may extend this special
 #   exception to the GPL to apply to your modified version as well.
 
-AC_DEFUN([AC_PYTHON_DEVEL],[
+AC_DEFUN([AX_PYTHON_DEVEL],[
 	#
 	# Allow the use of a (user set) custom python version
 	#
@@ -92,13 +97,12 @@ AC_DEFUN([AC_PYTHON_DEVEL],[
 		if test -z "$PYTHON_NOVERSIONCHECK"; then
 			AC_MSG_RESULT([no])
 			AC_MSG_FAILURE([
-This version of the AC@&t@_PYTHON_DEVEL macro
-doesn't work properly with versions of Python before
-2.1.0. You may need to re-run configure, setting the
-variables PYTHON_CPPFLAGS, PYTHON_LDFLAGS, PYTHON_SITE_PKG,
-PYTHON_EXTRA_LIBS and PYTHON_EXTRA_LDFLAGS by hand.
-Moreover, to disable this check, set PYTHON_NOVERSIONCHECK
-to something else than an empty string.
+This version of the AC@&t@_PYTHON_DEVEL macro doesn't work properly
+with versions of Python before 2.1.0. You may need to re-run
+configure, setting the variables PYTHON_CPPFLAGS, PYTHON_LDFLAGS,
+PYTHON_LIBS, PYTHON_SITE_PKG, PYTHON_EXTRA_LIBS and
+PYTHON_EXTRA_LDFLAGS by hand.  Moreover, to disable this check, set
+PYTHON_NOVERSIONCHECK to something else than an empty string.
 ])
 		else
 			AC_MSG_RESULT([skip at user request])
@@ -225,25 +229,32 @@ EOD`
 		then
 			# use the official shared library
 			ac_python_library=`echo "$ac_python_library" | sed "s/^lib//"`
-			PYTHON_LDFLAGS="-L$ac_python_libdir -l$ac_python_library"
+			PYTHON_LDFLAGS="-L$ac_python_libdir"
+			PYTHON_LIBS="-l$ac_python_library"
 		else
 			# old way: use libpython from python_configdir
 			ac_python_libdir=`$PYTHON -c \
 			  "from distutils.sysconfig import get_python_lib as f; \
 			  import os; \
 			  print (os.path.join(f(plat_specific=1, standard_lib=1), 'config'));"`
-			PYTHON_LDFLAGS="-L$ac_python_libdir -lpython$ac_python_version"
+			PYTHON_LDFLAGS="-L$ac_python_libdir"
+			PYTHON_LIBS="-lpython$ac_python_version"
 		fi
 
-		if test -z "PYTHON_LDFLAGS"; then
-			AC_MSG_ERROR([
-  Cannot determine location of your Python DSO. Please check it was installed with
-  dynamic libraries enabled, or try setting PYTHON_LDFLAGS by hand.
+		PYTHON_LIBDIR=$ac_python_libdir
+
+		if test -z "$PYTHON_LDFLAGS" -o -z "$PYTHON_LIBS"; then
+			AC_MSG_WARN([
+Cannot determine location of your Python DSO. Please check it was
+installed with dynamic libraries enabled, or try setting
+PYTHON_LDFLAGS and PYTHON_LIBS by hand.
 			])
 		fi
 	fi
-	AC_MSG_RESULT([$PYTHON_LDFLAGS])
+	AC_MSG_RESULT([$PYTHON_LDFLAGS $PYTHON_LIBS])
 	AC_SUBST([PYTHON_LDFLAGS])
+	AC_SUBST([PYTHON_LIBS])
+	AC_SUBST([PYTHON_LIBDIR])
 
 	#
 	# Check for site packages
@@ -285,7 +296,8 @@ EOD`
 	#
 	AC_MSG_CHECKING([consistency of all components of python development environment])
 	# save current global flags
-	LIBS="$ac_save_LIBS $PYTHON_LDFLAGS $PYTHON_EXTRA_LDFLAGS $PYTHON_EXTRA_LIBS"
+	LDFLAGS="$ac_save_LDFLAGS $PYTHON_LDFLAGS $PYTHON_EXTRA_LDFLAGS $PYTHON_EXTRA_LIBS"
+	LIBS="$ac_save_LIBS $PYTHON_LIBS"
 	CPPFLAGS="$ac_save_CPPFLAGS $PYTHON_CPPFLAGS"
 	AC_LANG_PUSH([C])
 	AC_LINK_IFELSE([
@@ -295,23 +307,29 @@ EOD`
 	AC_LANG_POP([C])
 	# turn back to default flags
 	CPPFLAGS="$ac_save_CPPFLAGS"
+	LDFLAGS="$ac_save_LDFLAGS"
 	LIBS="$ac_save_LIBS"
 
 	AC_MSG_RESULT([$pythonexists])
 
         if test ! "x$pythonexists" = "xyes"; then
-	   AC_MSG_FAILURE([
-  Could not link test program to Python. Maybe the main Python library has been
-  installed in some non-standard library path. If so, pass it to configure,
-  via the LDFLAGS environment variable.
-  Example: ./configure LDFLAGS="-L/usr/non-standard-path/python/lib"
-  ============================================================================
-   ERROR!
-   You probably have to install the development version of the Python package
-   for your distribution.  The exact name of this package varies among them.
-  ============================================================================
-	   ])
+	   AC_MSG_WARN([
+========================================================================
+Could not link test program to Python. Maybe the main Python library
+has been installed in some non-standard library path. If so, pass it
+to configure, via the LDFLAGS environment variable.
+
+Example: ./configure LDFLAGS="-L/usr/non-standard-path/python/lib"
+
+ERROR!
+You probably have to install the development version of the Python
+package for your distribution.  The exact name of this package varies
+among them.
+========================================================================])
 	  PYTHON_VERSION=""
+	  # Execute ACTION_IF_NOT_FOUND or ACTION_IF_FOUND
+	  m4_ifvaln([$3],[$3],[:])dnl
+	  m4_ifvaln([$2],[else $2])dnl
 	fi
 
 	#

@@ -4,11 +4,11 @@ EXTRA_DIST = test/test.py test/exceptions.py testfile.m project-root.jam \
 package/__init__.py package/pytave.py
 EXTRA_libdir = @PYTAVE_MODULE_INSTALL_PATH@
 
-_pytave_la_CPPFLAGS = -I@PYTAVE_OCTAVE_INCLUDE_PATH@ -I@PYTHON_INCLUDE_DIR@
+_pytave_la_CPPFLAGS = @OCTAVE_CPPFLAGS@ @PYTHON_CPPFLAGS@
 
 # Having -module in LDFLAGS lets us use a non-standard library name 
 # (e.g. _pytave instead of libpytave)
-_pytave_la_LDFLAGS = -module -L@PYTAVE_OCTAVE_RPATH@ -loctinterp -loctave  \
+_pytave_la_LDFLAGS = -module -L@OCTAVE_LIBRARYDIR@ -loctinterp -loctave  \
 -lcruft -l@BOOST_PYTHON_LIB@ -R @PYTAVE_OCTAVE_RPATH@
 
 _pytave_la_SOURCES = octave_to_python.cc pytave.cc python_to_octave.cc \

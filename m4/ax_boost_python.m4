@@ -4,7 +4,7 @@
 #
 # SYNOPSIS
 #
-#   AX_BOOST_PYTHON
+#   AX_BOOST_PYTHON([ACTION_IF_FOUND], [ACTION_IF_NOT_FOUND])
 #
 # DESCRIPTION
 #
@@ -18,15 +18,13 @@
 #
 #   This macro calls AC_SUBST(BOOST_PYTHON_LIB).
 #
-#   In order to ensure that the Python headers are specified on the include
-#   path, this macro requires AX_PYTHON to be called.
-#
 # LAST MODIFICATION
 #
-#   2008-04-12
+#   2009-04-04
 #
 # COPYLEFT
 #
+#   Copyright (c) 2009 David Grundberg
 #   Copyright (c) 2008 Michael Tindal
 #
 #   This program is free software; you can redistribute it and/or modify it
@@ -55,16 +53,14 @@
 #   distribute a modified version of the Autoconf Macro, you may extend this
 #   special exception to the GPL to apply to your modified version as well.
 
-AC_DEFUN([AX_BOOST_PYTHON],
-[AC_REQUIRE([AX_PYTHON])dnl
-AC_CACHE_CHECK(whether the Boost::Python library is available,
+AC_DEFUN([AX_BOOST_PYTHON], [
+AC_CACHE_CHECK([[whether the Boost::Python library is available]],
 ac_cv_boost_python,
-[AC_LANG_SAVE
+[
+ BOOST_PYTHON_LIB=
+ AC_LANG_SAVE
  AC_LANG_CPLUSPLUS
  CPPFLAGS_SAVE=$CPPFLAGS
- if test x$PYTHON_INCLUDE_DIR != x; then
-   CPPFLAGS=-I$PYTHON_INCLUDE_DIR $CPPFLAGS
- fi
  AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[
  #include <boost/python/module.hpp>
  using namespace boost::python;
@@ -76,15 +72,24 @@ ac_cv_boost_python,
 ])
 if test "$ac_cv_boost_python" = "yes"; then
   AC_DEFINE(HAVE_BOOST_PYTHON,,[define if the Boost::Python library is available])
-  ax_python_lib=boost_python
-  AC_ARG_WITH([boost-python],AS_HELP_STRING([--with-boost-python],[specify the boost python library or suffix to use]),
-  [if test "x$with_boost_python" != "xno"; then
-     ax_python_lib=$with_boost_python
-     ax_boost_python_lib=boost_python-$with_boost_python
-   fi])
-  for ax_lib in $ax_python_lib $ax_boost_python_lib boost_python; do
+  ax_boost_python_lib=boost_python
+  AS_IF([test -n "$PYTHON_VERSION"], [
+     # Read ax_python_devel for info about the PYTHON_VERSION variable
+     ax_boost_python_lib=boost_python$PYTHON_VERSION
+  ])
+  AC_ARG_WITH([boost-python],AS_HELP_STRING([--with-boost-python],[specify the boost python library or suffix to use]), [
+    AS_IF([test "x$with_boost_python" != "xno"], [
+       ax_boost_python_lib=$with_boost_python
+    ])
+  ])
+  for ax_lib in $ax_boost_python_lib boost_python; do
     AC_CHECK_LIB($ax_lib, exit, [BOOST_PYTHON_LIB=$ax_lib break])
   done
   AC_SUBST(BOOST_PYTHON_LIB)
 fi
+
+if  test -n "$BOOST_PYTHON_LIB" ; then
+   m4_ifvaln([$1],[$1],[:])dnl
+   m4_ifvaln([$2],[else $2])dnl
+ fi
 ])dnl
