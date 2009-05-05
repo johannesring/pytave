@@ -19,8 +19,8 @@ AC_PRESERVE_HELP_ORDER
 
 pytave_libs_ok=
 
-AX_OCTAVE([], [AC_MSG_WARN([OK])], [pytave_libs_ok=no])
-AX_PYTHON_DEVEL([], [AC_MSG_WARN([OK])], [pytave_libs_ok=no])
+AX_OCTAVE([], [], [pytave_libs_ok=no])
+AX_PYTHON_DEVEL([], [], [pytave_libs_ok=no])
 
 # Look for boost::python
 pytave_old_libs="$LIBS"
@@ -30,7 +30,7 @@ LIBS="$LIBS $PYTHON_LIBS"
 LDFLAGS="$LDFLAGS $PYTHON_LDFLAGS"
 CPPFLAGS="$CPPFLAGS $PYTHON_CPPFLAGS"
 
-AX_BOOST_PYTHON([AC_MSG_WARN([OK])], [pytave_libs_ok=no])
+AX_BOOST_PYTHON([], [pytave_libs_ok=no])
 
 LIBS="$pytave_old_libs"
 LDFLAGS="$pytave_old_ldflags"
