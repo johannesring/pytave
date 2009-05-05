@@ -189,7 +189,8 @@ namespace pytave {
    static void pylist_to_cellarray(octave_value &oct_value,
                                    const boost::python::list &list) {
 
-      size_t length = boost::python::extract<size_t>(list.attr("__len__")());
+      octave_idx_type length = boost::python::extract<octave_idx_type>(
+         list.attr("__len__")());
       octave_value_list values;
 
       for(octave_idx_type i = 0; i < length; i++) {
@@ -207,7 +208,8 @@ namespace pytave {
                                 const boost::python::dict &dict) {
 
       boost::python::list list = dict.items();
-      size_t length = boost::python::extract<size_t>(list.attr("__len__")());
+      octave_idx_type length = boost::python::extract<octave_idx_type>(
+         list.attr("__len__")());
 
       dim_vector dims = dim_vector(1, 1);
 
@@ -223,6 +225,8 @@ namespace pytave {
 
          if(val.is_cell()) {
             const Cell c(val.cell_value());
+            if (error_state)
+               throw object_convert_exception("Octave error");
 
             // Some things are assumed since we have converted a Python list to
             // a cell.
@@ -231,10 +235,9 @@ namespace pytave {
 
             // We do not bother measuring 1x1 values, since they are replicated
             // to fill up the necessary dimensions.
-            if(c.dims().length() == 2 && c.dim1() != 1 && c.dim2() != 1) {
+            if(!(c.dims().length() == 2 && c.dims()(0) == 1 && c.dims()(1) == 1)) {
 
                if(!has_dimensions) {
-
                   dims = c.dims();
                   has_dimensions = true;
                } else if(c.dims() != dims) {
@@ -271,17 +274,26 @@ namespace pytave {
                "field name. Field names must be valid Octave identifiers.");
          }
 
+         // FIXME: Second time around we convert exactly the same object
          pyobj_to_octvalue(val, tuple[1]);
 
-         if(!val.is_cell())
+         if(!val.is_cell()) {
             map.assign(key, Cell(dims, val));
-         else {
+         } else {
             const Cell c(val.cell_value());
 
-            if(c.dims().length() == 2 && c.dims()(0) == 1 && c.dims()(1) == 1)
+            if (error_state)
+               throw object_convert_exception("Octave error");
+
+            if(c.dims().length() == 2 && c.dims()(0) == 1 && c.dims()(1) == 1) {
                map.assign(key, Cell(dims, c(0)));
-            else
+            }
+            else {
                map.assign(key, c);
+            }
+         }
+         if (error_state) {
+            throw object_convert_exception("Octave error");
          }
       }
       oct_value = map;
