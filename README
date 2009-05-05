@@ -1,150 +1,196 @@
-pytave README
-*************
+-*- coding:utf-8 -*-
 
-Building instructions
-=====================
+Pytave README
 
-You can use either Python distutils, GNU Automake or Boost BJam to
-build pytave. The configure script outputs files for all these build
-systems. Autoconf's VPATH is supported on all build systems.
+For installation instructions specific for Pytave, please see the
+INSTALL file.
 
-    Use the configure script to set up Octave and Boost::Python
-paths. Run `./configure --help' for more info. There are two custom
-arguments that control building of pytave, `--with-octave' and
-`--with-boost-python'.
-
-Dependencies
-============
-
-Configuring:
-	an sh shell capable of running `configure'
-
-Building:
-	Python's distutils or
-	make or
-	BJam
-
-Linked and tested with:
-    Python 2.4
-    Boost::Python 1.33
-    Octave 3.0.2
-
-Bootstraping from Bazaar trunk
-==============================
-
-  1. `bzr branch lp:pytave'
-
-  2. `autoreconf --install'
-
-  3. `./configure'
-
-Autotools
-=========
-
-The Autotools build system need not be installed to build the
-module. You need `make' and all library dependencies though.
-
-  1. Create the `Makefile' by typing:
-	 `./configure --prefix=/directory/where/you/want/the/module/file'
-
-  2. Type `make' to build the extention module.
-
-  3. To copy the pytave dynamic library to the prefix, type
-     `make install'
-
-BJam
-====
-
-BJam must be installed in order to build the module. You also need a
-proper `user-config.jam' file in your home directory.
-
-  1. Create `Jamfile' and `project-root.jam' by typing `./configure'
-
-  2. Use your `bjam' command to build the extention module. 
-
-user-config.jam
-===============
-
-For your convenience, here the content of a typical ~/user-config.jam
-on a GNU/Linux system:
-
-using gcc ;
-using python : 2.5 ;
-
-Distutils
-=========
-
-  1. Create the `setup.py' file by typing `./configure'
-
-  2. Run `python setup.py build' to build and package the extention
-     module together with the pure Python files.
-
-Running from build directory
-============================
-
-Pytave is made up of three parts. The `pytave' package, the
-`pytave/pytave' module and the `pytave/_pytave' extention. When the
-user uses `import pytave', the pytave package __init__ script loads
-both the module and the extention. It is important that they both can
-be found. 
-
-  1. Follow the Distutils build instructions. A complete Python
-     package directory called `pytave' is created in
-     `build/lib.something'
-
-  2. Start the Python interactive interpreter with
-     `PYTHONPATH=build/lib.linux-i686-2.4/ python' (with appropiate
-     changes for your system.)
-
-  3. In the interpreter you can now access Octave through Python:
-
-import pytave
-import Numeric
-pytave.feval(1, "cos", 0)
-b = pytave.addpath(".")
-pytave.feval(1, "testfile", 42)
-
-     (Observe that there is a testfile.m file in the distribution.)
-
-    Using BJam or Automake instead of Distutils, you load the
-`pytave/pytave' module and the extention instead of the whole
-package. Using `import pytave' now calls the module directly, but the
-difference is transparent to the user.
-
-    Basically all you want to do is load Python with shared library
-for the pytave extention (called `pytave/_pytave') and the native
-`pytave/pytave' module. BJam creates shared library in the
-`bin/something/something' directory, while Autotools hide a working
-shared library in the `.libs' directory. The contents of the `pytave'
-package is stored in the directory `package' of the source
-package. This is an example for an Autotools build.
-
-  1. Follow the Autotools build instructions.
-
-  2. Start the Python interpreter with a Python path set to a path
-     containing `_pytave.so' and the `package' directory. A common way
-     to do this with the bash shell is to execute this command:
-     `PYTHONPATH=.libs:package python'.
-
-Installing with distutils
+Contents of this document
 =========================
 
-  1. Run `python setup.py install'
+1. What is Pytave?
+2. Gotchas
+3. Pytave and multi-threading
+4. Python/Octave cheat sheet
 
-Creating a source dist
-======================
+What is Pytave?
+***************
 
-  1. Run `make distcheck'
+Pytave enables Python scripts to use existing m-files (Octave/Matlab
+scripts) for numerical calculations.  The Octave language interpreter
+is embedded as a module to Python.
 
-Hint about foreign systems
-==========================
+Example use
+===========
 
-If you are running on a system incapable of executing the configure
-scripts (e.g. a Microsoft Windows system), you may want to try
-installing the `MinGW' and `MSYS' packages, and build everything
-inside that environment. This isn't for the faint of hearted though,
-since you need/want to build Octave too. It is probably easier than
-trying to build without configure scripts, that's all. There are no
-guarentees that it will build at all, it has not been tested.
+Calling Octave code in the interactive Python interpreter:
+
+>>> import pytave
+>>> pytave.feval(1, "cos", 0)
+(1.0,)
+
+Goals
+=====
+
+Pytave strives to uphold these points
+
+  * Good out of the box experience
+
+  * Good-natured implicit type conversions, no strange PyApple ->
+    octave_orange -> PyBanana chains
+
+Features
+========
+
+A short list of what Pytave is capable of
+
+  * Implicit type conversions between Python and Octave.  Supports all
+    Numeric integer, real double (and possibly real float) matrices
+
+  * Architecture independent - no assumption on endian type or integer
+    sizes
+
+  * Supports cell <-> list and struct <-> dict conversions.
+
+Project homepage
+================
+
+https://launchpad.net/pytave
+
+Using/hacking
+=============
+
+You need the Bazaar version control software (bzr).  Branch from trunk
+with:
+
+  $ bzr branch lp:pytave
+
+   You will now have a directory called `pytave' with source code for
+the module.  Read the INSTALL file for building instructions.
+
+Gotchas
+*******
+
+Unfortunately, the implicit conversion is not bijective (there is not
+a one-to-one relation between Octave and Python values).  Pytave users
+should be aware of the following cases.
+
+Numeric row vectors to Octave matrices
+======================================
+
+Numeric row vectors are converted to Octave 1xN matrices; returned 1xN
+matrices will become 1xN numerical arrays, not row vectors. As an
+example, a Numeric array with shape == (3,) will become (1, 3) when
+converted back and forth.
+
+Octave cells to Python lists
+============================
+
+Only row cell arrays can be converted to Python lists.
+
+Python dictionaries to Octave structures
+========================================
+
+Dictionaries converted to structures must only have string keys.  This
+is because Octave structures only allow string keys.  Keys must also
+be valid Octave identifiers.
+
+   As Octave structures are built using cells, simple variables are
+upgraded to cells when a dictionary is converted.  A dictionary
+
+{"name": "Pytave"}
+
+thus will become
+
+ans =
+{
+  name = Pytave
+}
+
+in Octave.  In this listing, Octave is hiding the fact that the value
+is wrapped in a cell.  Converted back, cells are converted to Python
+lists. The re-converted Python dictionary will read
+
+{"name": ["Pytave"]}
+
+which is natural effect because of the way Octave handles structures.
+
+   The list values in dictionaries to be converted must be of equal
+length.  All restrictions demanded by the Octave `struct' built-in
+applies.
+
+Pytave and multi-threading
+**************************
+
+Pytave does not handle reentrant calls.  It is not thread-safe, and
+you cannot make several Pytave calls in parallel.  There are no safety
+harnesses in Pytave (unlike e.g. PySqlite), and Pytave will not stop
+you if you try to make concurrent calls.  The behavior is undefined.
+It is not possible to run several calculations in parallel.
+
+   That being said, it is possible to do other things while one Pytave
+call is running.  Pytave is aware of the Global Interpreter Lock.  The
+lock will be released while the Octave interpreter is running,
+allowing you to have other Python threads to run in parallel with the
+one Octave call.
+
+Python/Octave cheat sheet
+*************************
+
+Octave and Python share some syntax elements, which unfortunately
+makes it harder to distinguish between the languages.  Here are some
+examples in both languages, showing how to build related constructs.
+
+Create a 2x3 matrix
+===================
+
+octave:1> [1, 1, 1; 2, 2, 2]
+python>>> array([[1, 1, 1], [2, 2, 2]])
+
+Create a 3x2 matrix
+===================
+
+octave:1> [1, 1; 2, 2; 3, 3]
+python>>> array([[1, 1], [2, 2], [3, 3]])
+
+Create a 1x3 matrix
+===================
+
+octave:1> [1, 1, 1]
+python>>> array([[1, 1, 1]])
+
+Create a row vector
+===================
+
+Not applicable to Octave.
+python>>> array([1, 1, 1])
+
+Note: Python row vectors will be converted to Octave 1xN matrices.
+
+Create a 3x1 matrix
+===================
+
+octave:1> [1; 2; 3]
+python>>> array([[1], [2], [3]])
+
+Create a 1x1 structure/dictionary
+=================================
+
+octave:1> struct("x", 1, "y", 2)
+python>>> {"x": 1, "y": 2}
+
+Create a 1x2 structure array/dictionary containing lists of length 2
+====================================================================
+
+octave:1> struct("firstname", {"David", "Håkan"}, ...
+                 "lastname", {"Grundberg", "Fors Nilsson"})
+python>>> {"firstname": ["David", "Håkan"], \
+           "lastname": ["Grundberg", "Fors Nilsson"]}
+
+Create a 1x3 cell array/list
+============================
+
+octave:1> {"foo", "bar", "baz"}
+python>>> ["foo", "bar", "baz"]
 
 EOF.

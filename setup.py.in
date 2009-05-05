@@ -31,9 +31,9 @@ setup(
          
          # TODO: Check whether paths work on Windows or not.
          # The file separator might be wrong. (Must be / in setup.cfg)
-         include_dirs = ['@PYTAVE_OCTAVE_INCLUDE_PATH@', '@abs_builddir@', '@srcdir@'], # Python always included.
+         include_dirs = ['@OCTAVE_INCLUDEDIR@', '@abs_builddir@', '@srcdir@'], # Python always included.
          define_macros = [('HAVE_CONFIG_H', '1')],
-         library_dirs = ['@PYTAVE_OCTAVE_RPATH@'],
+         library_dirs = ['@OCTAVE_LIBRARYDIR@'],
          runtime_library_dirs = ['@PYTAVE_OCTAVE_RPATH@'],
          libraries = ['octinterp', 'octave', 'cruft', '@BOOST_PYTHON_LIB@']
       )

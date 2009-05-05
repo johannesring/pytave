@@ -50,6 +50,8 @@ def feval(nargout, funcname, *arguments):
 		int (32-bit)        int32
 		float (64-bit)      double
 		str                 string
+		dict                struct
+		list                cell
 		
 	Numeric Array:
 		UBYTE, SBYTE,       matrix of correct type
@@ -67,8 +69,13 @@ def feval(nargout, funcname, *arguments):
 	Scalar values to objects:
 		bool                bool
 		real scalar         float (64-bit)
-		string, sq_string   str
-		str                 string
+		any string*         str
+		struct              dict
+		cell*               list
+
+		* Cell arrays must be one-dimensional (row vector) and
+                  character matrices must only have one row.  Any
+                  other form will raise a ValueConvertError.
 		
 	Matrix values to Numeric arrays:
 		int64               LONG
@@ -106,6 +113,6 @@ def path(*paths):
 #	fill-column:70
 #	coding:utf-8
 #	indent-tabs-mode:t
-#	tab-width:3
+#	tab-width:8
 #	End:
 # vim: set textwidth=70 noexpandtab tabstop=3 :

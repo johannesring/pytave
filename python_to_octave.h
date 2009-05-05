@@ -20,9 +20,6 @@
 #ifndef PYTHON_TO_OCTAVE_H
 #define PYTHON_TO_OCTAVE_H
 
-class octave_value_list;
-class boost::python::tuple;
-
 namespace pytave {
    void pytuple_to_octlist(octave_value_list &octave_list,
                            const boost::python::tuple &python_tuple);

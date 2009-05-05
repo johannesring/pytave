@@ -6,8 +6,8 @@ project py :
 	<library>@JAM_LIBOCTAVE@
 	<library>@JAM_LIBCRUFT@
 	<library>@JAM_LIBOCTINTERP@
-	<include>@PYTHON_INCLUDE_DIR@
-	<include>@PYTAVE_OCTAVE_INCLUDE_PATH@
+#	<include>@PYTHON_INCLUDE_DIR@
+	<include>@OCTAVE_INCLUDEDIR@
 	<include>@abs_srcdir@
 	<include>@abs_builddir@
 	<define>"HAVE_CONFIG_H"

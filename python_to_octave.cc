@@ -23,6 +23,8 @@
 #include "arrayobjectdefs.h"
 #undef HAVE_STAT /* both boost.python and octave defines HAVE_STAT... */
 #include <octave/oct.h>
+#include <octave/oct-map.h>
+#include <octave/Cell.h>
 #include <octave/Matrix.h>
 #include <octave/ov.h>
 
@@ -33,6 +35,9 @@ using namespace std;
 using namespace boost::python;
 
 namespace pytave {
+
+   void pyobj_to_octvalue(octave_value &oct_value,
+                          const boost::python::object &py_object);
 
    template <class PythonPrimitive, class OctaveBase>
    static void copy_pyarrobj_to_octarray(OctaveBase &matrix,
@@ -107,10 +112,9 @@ namespace pytave {
    }
 
    static void pyarr_to_octvalue(octave_value &octvalue,
-                          const PyArrayObject *pyarr) {
+                                 const PyArrayObject *pyarr) {
       if (pyarr->nd < 1)
          throw object_convert_exception("Less than 1 dimensions not supported");
-
       dim_vector dims;
       switch (pyarr->nd) {
          case 1:
@@ -182,12 +186,127 @@ namespace pytave {
       }
    }
 
+   static void pylist_to_cellarray(octave_value &oct_value,
+                                   const boost::python::list &list) {
+
+      octave_idx_type length = boost::python::extract<octave_idx_type>(
+         list.attr("__len__")());
+      octave_value_list values;
+
+      for(octave_idx_type i = 0; i < length; i++) {
+         octave_value val;
+
+         pyobj_to_octvalue(val, list[i]);
+         values.append(val);
+
+      }
+
+      oct_value = Cell(values);
+   }
+
+   static void pydict_to_octmap(octave_value &oct_value,
+                                const boost::python::dict &dict) {
+
+      boost::python::list list = dict.items();
+      octave_idx_type length = boost::python::extract<octave_idx_type>(
+         list.attr("__len__")());
+
+      dim_vector dims = dim_vector(1, 1);
+
+      bool has_dimensions = false;
+
+      for(octave_idx_type i = 0; i < length; i++) {
+         octave_value val;
+
+         boost::python::tuple tuple =
+            boost::python::extract<boost::python::tuple>(list[i])();
+
+         pyobj_to_octvalue(val, tuple[1]);
+
+         if(val.is_cell()) {
+            const Cell c(val.cell_value());
+            if (error_state)
+               throw object_convert_exception("Octave error");
+
+            // Some things are assumed since we have converted a Python list to
+            // a cell.
+            assert(c.dims().length() == 2);
+            assert(c.dim1() == 1);
+
+            // We do not bother measuring 1x1 values, since they are replicated
+            // to fill up the necessary dimensions.
+            if(!(c.dims().length() == 2 && c.dims()(0) == 1 && c.dims()(1) == 1)) {
+
+               if(!has_dimensions) {
+                  dims = c.dims();
+                  has_dimensions = true;
+               } else if(c.dims() != dims) {
+                  throw object_convert_exception(
+                     "Dimensions of the struct fields do not match");
+               }
+            }
+         }
+      }
+
+      Octave_map map = Octave_map(dims);
+
+      for(octave_idx_type i = 0; i < length; i++) {
+         octave_value val;
+         std::string key;
+
+         boost::python::tuple tuple =
+            boost::python::extract<boost::python::tuple>(list[i])();
+
+         boost::python::extract<std::string> str(tuple[0]);
+         if(!str.check()) {
+            throw object_convert_exception(
+               string("Can not convert key of type ")
+               + PyEval_GetFuncName(boost::python::object(tuple[0]).ptr())
+               + PyEval_GetFuncDesc(boost::python::object(tuple[0]).ptr())
+               + " to a structure field name. Field names must be strings.");
+         }
+
+         key = str();
+
+         if (!valid_identifier(key)) {
+            throw object_convert_exception(
+               string("Can not convert key `") + key + "' to a structure "
+               "field name. Field names must be valid Octave identifiers.");
+         }
+
+         // FIXME: Second time around we convert exactly the same object
+         pyobj_to_octvalue(val, tuple[1]);
+
+         if(!val.is_cell()) {
+            map.assign(key, Cell(dims, val));
+         } else {
+            const Cell c(val.cell_value());
+
+            if (error_state)
+               throw object_convert_exception("Octave error");
+
+            if(c.dims().length() == 2 && c.dims()(0) == 1 && c.dims()(1) == 1) {
+               map.assign(key, Cell(dims, c(0)));
+            }
+            else {
+               map.assign(key, c);
+            }
+         }
+         if (error_state) {
+            throw object_convert_exception("Octave error");
+         }
+      }
+      oct_value = map;
+    }
+
    void pyobj_to_octvalue(octave_value &oct_value,
                           const boost::python::object &py_object) {
       extract<int> intx(py_object);
       extract<double> doublex(py_object);
       extract<string> stringx(py_object);
       extract<numeric::array> arrayx(py_object);
+      extract<boost::python::list> listx(py_object);
+      extract<boost::python::dict> dictx(py_object);
       if (intx.check()) {
          oct_value = intx();
       } else if (doublex.check()) {
@@ -196,6 +315,10 @@ namespace pytave {
          pyarr_to_octvalue(oct_value, (PyArrayObject*)py_object.ptr());
       } else if (stringx.check()) {
          oct_value = stringx();
+      } else if (listx.check()) {
+         pylist_to_cellarray(oct_value, (boost::python::list&)py_object);
+      } else if (dictx.check()) {
+         pydict_to_octmap(oct_value, (boost::python::dict&)py_object);
       } else {
          throw object_convert_exception(
             PyEval_GetFuncName(py_object.ptr())
@@ -213,8 +336,6 @@ namespace pytave {
          pyobj_to_octvalue(octave_list(i), python_tuple[i]);
       }
    }
-
-
 }
 
 /* Emacs
