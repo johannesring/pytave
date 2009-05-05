@@ -1,3 +1,12 @@
+2009-05-05  David Grundberg  <individ@acc.umu.se>
+
+	* python_to_octave.cc: Function pydict_to_octmap modified.
+	* m4/ax_octave.m4, m4/ax_python_devel.m4: New files.
+	* m4/ax_python.m4: Removed.
+	* m4/ax_boost_python.m4, README, INSTALL: Rewritten.
+	* configure.ac, setup.py.in, Jamfile.in, Makefile.am: Adjusted to
+	new Autoconf macros.
+
 2008-11-17  Håkan Fors Nilsson  <c04hfn@cs.umu.se>
 
 	* octave_to_python.cc: Added functions octcell_to_pyobject and 
@@ -39,6 +48,6 @@
 
 Local Variables:
 coding: utf-8
-fillcolumn: 72
+fill-column: 74
 End:
-vim: set textwidth=72 noexpandtab :
+vim: set textwidth=74 noexpandtab :
