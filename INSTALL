@@ -88,7 +88,7 @@ be found.
      `build/lib.something'
 
   2. Start the Python interactive interpreter with
-     `PYTHONPATH=build/lib.linux-i686-2.4/ python' (with appropiate
+     `PYTHONPATH=build/lib.linux-i686-2.4/ python' (with appropriate
      changes for your system.)
 
   3. In the interpreter you can now access Octave through Python:
@@ -99,7 +99,8 @@ pytave.feval(1, "cos", 0)
 b = pytave.addpath(".")
 pytave.feval(1, "testfile", 42)
 
-     (Observe that there is a testfile.m file in the distribution.)
+     (Observe that there is no testfile.m file in the distribution.
+     You could create one for yourself.)
 
     Using BJam or Automake instead of Distutils, you load the
 `pytave/pytave' module and the extention instead of the whole
@@ -120,6 +121,14 @@ package. This is an example for an Autotools build.
      containing `_pytave.so' and the `package' directory. A common way
      to do this with the bash shell is to execute this command:
      `PYTHONPATH=.libs:package python'.
+
+     With BJam that command would be something like:
+     `PYTHONPATH=bin/something/something:package python'.
+
+Running test suite in build directory
+=====================================
+
+Read the instructions above, and start the script test/test.py.
 
 Installing with distutils
 =========================
