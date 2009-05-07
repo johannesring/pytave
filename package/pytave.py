@@ -22,16 +22,16 @@
 import _pytave
 
 _pytave.init()
-(OctaveError, ValueConvertError, ObjectConvertError) \
+(OctaveError, ValueConvertError, ObjectConvertError, ParseError) \
 				  = _pytave.get_exceptions();
 
 def feval(nargout, funcname, *arguments):
 
 	"""Executes an Octave function called funcname.
 
-	The function is set to return nargout values. Returned values are
-	stored in a tuple. If the nargout argument is less than or equal
-	to 0, an empty tuple is returned.
+	The function is set to return nargout values. Returned values
+	are stored in a tuple. If the nargout argument is less than 0,
+	an empty tuple is returned.
 
 	M-files are searched for in the Octave path.
 
@@ -95,6 +95,41 @@ def feval(nargout, funcname, *arguments):
 	"""
 
 	return _pytave.feval(nargout, funcname, arguments)
+
+def eval(nargout, code, silent=True):
+
+	"""Executes a given Octave code.
+
+	The expression is expected to return nargout values. Returned
+	values are stored in a tuple. If the nargout argument is less
+	than 0, an empty tuple is returned.
+
+	All normal scope and function search rules apply. If silent is
+	true (default), the result is not auto-printed, as if a
+	semicolon was appended. Otherwise, auto-printing is enabled.
+
+	See also the Octave documentation for the builtin Octave
+	function eval.
+
+	For information about returned value conversion, see
+	pytave.feval.
+
+	Errors
+	******
+
+	If the code cannot be parsed, a pytave.ParseError exception
+	occurs.
+
+	Octave runtime errors are encapsulated into pytave.OctaveError
+	exceptions, base class RuntimeError.
+
+	If the resulting values cannot be converted, a
+	pytave.ValueConvertError is raised. This exception inherits
+	TypeError.
+
+	"""
+
+	return _pytave.eval(nargout, code, silent)
 
 def addpath(*arguments):
 	"""See Octave documentation"""

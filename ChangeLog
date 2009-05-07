@@ -1,3 +1,10 @@
+2009-05-07  Jaroslav Hajek  <highegg@gmail.com>
+
+	* exceptions.h: Added octave_parse_exception class.
+	* package/pytave.py: Added ParseError exception and eval method.
+	* pytave.cc: Extracted make_error_message from func_eval. Added
+	str_eval
+
 2009-05-05  David Grundberg  <individ@acc.umu.se>
 
 	* python_to_octave.cc: Function pydict_to_octmap modified.

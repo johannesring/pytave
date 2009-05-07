@@ -1,4 +1,22 @@
-Version 0.1-bzr 
+Version 0.1.1-bzr 
+
+2009-05-07
+
+* Added an eval function. A string of Octave code can be executed
+  through this function. The returned values are converted to Python
+  objects as with the feval function.
+
+  In principle, this could be achieved simply using feval("eval", but
+  the advantages to this implementation are:
+
+  1. faster (avoids double call and double conversion of code string)
+
+  2. explicit control of printing rather than implicitly with nargout
+  (as in eval)
+
+  3. separate exception classes for parse error / execution error
+
+2009-05-05
 
 * Added functionality for one-row cell arrays.  The Python list is
   converted to a one-row cell array and vice versa.
@@ -6,3 +24,4 @@ Version 0.1-bzr
 * Added functionality for structs.  The Python distionary is converted
   to a Octave struct and vice versa.  The implementation tries to be
   as true as possible to Octave's struct constructor.
+

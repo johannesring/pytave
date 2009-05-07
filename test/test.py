@@ -86,12 +86,28 @@ def testvalueerror(*value):
 	except Exception, e:
 		print "FAIL", (value,), e
 
+def testparseerror(*value):
+	try:
+		print pytave.eval(*value);
+		print "FAIL:", (value,)
+	except pytave.ParseError:
+		pass
+	except Exception, e:
+		print "FAIL", (value,), e
+
 def testvalueok(*value):
 	try:
 		pytave.feval(1, *value);
 	except Exception, e:
 		print "FAIL", (value,), e
 
+def testevalexpect(numargout, code, expectations):
+	try:
+		results = pytave.eval(numargout, code);
+		if results != expectations:
+			print "FAIL: eval: ", code, " because", results, " != ", expectations, ","
+	except Exception, e:
+		print "FAIL: eval:", code, ":", e
 def testcellinvariant(value):
 	pass
 
@@ -200,4 +216,7 @@ result, = pytave.feval(1, "eval", "[1; 2; 3]");
 if result.shape != (3, 1):
 	print "FAIL: expected 3x1 matrix"
 
-
+testparseerror(1, "endfunction")
+testevalexpect(1, "2 + 2", (4,))
+testevalexpect(0, "{2}", ([2],))
+testevalexpect(2, "struct('foo', 2)", ({'foo': [2]},))
