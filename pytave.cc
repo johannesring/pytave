@@ -48,7 +48,8 @@ namespace pytave { /* {{{ */
 
       if (!octave_error_exception::init()
           || !value_convert_exception::init()
-          || !object_convert_exception::init()) {
+          || !object_convert_exception::init()
+          || !octave_parse_exception::init()) {
          PyErr_SetString(PyExc_ImportError, "_pytave: init failed");
          return;
       }
@@ -74,11 +75,45 @@ namespace pytave { /* {{{ */
                         object(handle<PyObject>(
                                   value_convert_exception::excclass)),
                         object(handle<PyObject>(
-                                  object_convert_exception::excclass)));
+                                  object_convert_exception::excclass)),
+                        object(handle<PyObject>(
+                                  octave_parse_exception::excclass)));
    }
 
+   string make_error_message (const Octave_map& map) {
+      ostringstream exceptionmsg;
+      string message = map.stringfield("message", "");
+      string identifier = map.stringfield("identifier", "");
+      Cell stackCell = map.contents("stack");
+
+      // Trim trailing new lines
+      message = message.substr(0, message.find_last_not_of("\r\n") + 1);
+
+      if (!stackCell.is_empty() && stackCell(0).is_map()) {
+         // The struct element is called "stack" but only contain
+         // info about the top frame.
+         Octave_map stack = stackCell(0).map_value();
+         string file = stack.stringfield("file", "");
+         string name = stack.stringfield("name", "");
+         int line = stack.intfield("line", 1);
+         int column = stack.intfield("column", 2);
+
+         exceptionmsg << file << ":" << line << ":" << column << ": ";
+         if (!name.empty())
+            exceptionmsg << "in '" << name << "': ";
+      }
+
+      if (!identifier.empty()) {
+         exceptionmsg << "(identifier: " << identifier << ") ";
+      }
+      exceptionmsg << message;
+
+      return exceptionmsg.str ();
+   }
+
+     
    boost::python::tuple func_eval(const int nargout,
-                                  const std::string &funcname,
+                                  const string &funcname,
                                   const boost::python::tuple &arguments) {
 
       octave_value_list octave_args, retval;
@@ -89,7 +124,7 @@ namespace pytave { /* {{{ */
       buffer_error_messages++;
       
       Py_BEGIN_ALLOW_THREADS
-      retval = feval(funcname, octave_args, nargout);
+      retval = feval(funcname, octave_args, (nargout >= 0) ? nargout : 0);
       Py_END_ALLOW_THREADS
 
       if (error_state != 0) {
@@ -102,45 +137,63 @@ namespace pytave { /* {{{ */
          octave_value_list lasterror = eval_string("lasterror",
                                                    true, parse_status, 1);
          if (!lasterror.empty() && lasterror(0).is_map()) {
-            ostringstream exceptionmsg;
-            Octave_map map = lasterror(0).map_value();
-            string message = map.stringfield("message", "");
-            string identifier = map.stringfield("identifier", "");
-            Cell stackCell = map.contents("stack");
-
-            // Trim trailing new lines
-            message = message.substr(0, message.find_last_not_of("\r\n") + 1);
-
-            if (!stackCell.is_empty() && stackCell(0).is_map()) {
-               // The struct element is called "stack" but only contain
-               // info about the top frame.
-               Octave_map stack = stackCell(0).map_value();
-               string file = stack.stringfield("file", "");
-               string name = stack.stringfield("name", "");
-               int line = stack.intfield("line", 1);
-               int column = stack.intfield("column", 2);
-
-               exceptionmsg << file << ":" << line << ":" << column << ": ";
-               if (!name.empty())
-                  exceptionmsg << "in '" << name << "': ";
-            }
-
-            if (!identifier.empty()) {
-               exceptionmsg << "(identifier: " << identifier << ") ";
-            }
-            exceptionmsg << message;
-
-            throw octave_error_exception(exceptionmsg.str());
+            string exceptionmsg = make_error_message(lasterror(0).map_value ());
+            throw octave_error_exception(exceptionmsg);
          } else
             throw octave_error_exception("No Octave error available");
       }
 
-      if (nargout > 0) {
+      if (nargout >= 0) {
          boost::python::tuple pytuple;
          octlist_to_pytuple(pytuple, retval);
          return pytuple;
       } else {
-         // Return () if nargout <= 0.
+         // Return () if nargout < 0.
+         return make_tuple();
+      }
+   }
+
+   boost::python::tuple str_eval(int nargout,
+                                 const string &code,
+                                 bool silent) {
+
+      octave_value_list retval;
+      int parse_status;
+
+      reset_error_handler();
+      buffer_error_messages++;
+      
+      Py_BEGIN_ALLOW_THREADS
+      retval = eval_string(code, silent, parse_status,
+         (nargout >= 0) ? nargout : 0);
+      Py_END_ALLOW_THREADS
+
+      if (parse_status != 0 || error_state != 0) {
+// error_state values:
+// -2 error without traceback
+// -1 traceback
+//  1 general error
+         int parse_status1 = 0;
+         reset_error_handler();
+         octave_value_list lasterror = eval_string("lasterror",
+                                                   true, parse_status1, 1);
+         if (!lasterror.empty() && lasterror(0).is_map()) {
+            string exceptionmsg = make_error_message (lasterror(0).map_value ());
+
+            if (parse_status != 0)
+               throw octave_parse_exception(exceptionmsg);
+            else
+               throw octave_error_exception(exceptionmsg);
+         } else
+            throw octave_error_exception("No Octave error available");
+      }
+
+      if (nargout >= 0) {
+         boost::python::tuple pytuple;
+         octlist_to_pytuple(pytuple, retval);
+         return pytuple;
+      } else {
+         // Return () if nargout < 0.
          return make_tuple();
       }
    }
@@ -151,6 +204,7 @@ BOOST_PYTHON_MODULE(_pytave) { /* {{{ */
 
    def("init", pytave::init);
    def("feval", pytave::func_eval);
+   def("eval", pytave::str_eval);
    def("get_exceptions", pytave::get_exceptions);
 
    register_exception_translator<pytave::pytave_exception>(
@@ -158,6 +212,9 @@ BOOST_PYTHON_MODULE(_pytave) { /* {{{ */
 
    register_exception_translator<pytave::octave_error_exception>(
       pytave::octave_error_exception::translate_exception);
+
+   register_exception_translator<pytave::octave_parse_exception>(
+      pytave::octave_parse_exception::translate_exception);
 
    register_exception_translator<pytave::object_convert_exception>(
       pytave::object_convert_exception::translate_exception);

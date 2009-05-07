@@ -55,6 +55,25 @@ namespace pytave {
 
    };
 
+   class octave_parse_exception {
+      public:
+         static bool init() {
+            excclass = PyErr_NewException(
+               const_cast<char*>("pytave.ParseError"),
+               PyExc_RuntimeError, NULL);
+            return excclass != NULL;
+         };
+         static void translate_exception(octave_parse_exception const &py_ex) {
+            PyErr_SetString(excclass, py_ex.error.c_str());
+         }
+         static PyObject *excclass;
+
+         octave_parse_exception(std::string err) { error = err; };
+
+      private:
+         std::string error;
+   };
+
    class value_convert_exception {
       public:
          static bool init() {

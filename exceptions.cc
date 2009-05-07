@@ -25,6 +25,7 @@ namespace pytave {
 	PyObject *octave_error_exception::excclass = NULL;
 	PyObject *value_convert_exception::excclass = NULL;
 	PyObject *object_convert_exception::excclass = NULL;
+	PyObject *octave_parse_exception::excclass = NULL;
 
 }
 
