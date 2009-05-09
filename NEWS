@@ -21,7 +21,7 @@ Version 0.1.1-bzr
 * Added functionality for one-row cell arrays.  The Python list is
   converted to a one-row cell array and vice versa.
 
-* Added functionality for structs.  The Python distionary is converted
+* Added functionality for structs.  The Python dictionary is converted
   to a Octave struct and vice versa.  The implementation tries to be
   as true as possible to Octave's struct constructor.
 

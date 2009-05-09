@@ -22,7 +22,7 @@ setup(
          ],
          depends = [
          '@srcdir@/arrayobjectdefs.h',
-         '@srcdir@/config.h',
+         '@abs_builddir@/config.h',
          '@srcdir@/octave_to_python.h',
          '@srcdir@/pytavedefs.h',
          '@srcdir@/exceptions.h',
