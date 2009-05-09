@@ -15,5 +15,5 @@ project py :
  	<cxxflags>"-Wall"
 ;
 
-python-extension _pytave : @srcdir@/octave_to_python.cc @srcdir@/pytave.cc @srcdir@/exceptions.cc @srcdir@/python_to_octave.cc @srcdir@/arrayobjectdefs.h @srcdir@/config.h @srcdir@/octave_to_python.h @srcdir@/pytavedefs.h @srcdir@/exceptions.h @srcdir@/python_to_octave.h ;
+python-extension _pytave : @srcdir@/octave_to_python.cc @srcdir@/pytave.cc @srcdir@/exceptions.cc @srcdir@/python_to_octave.cc @srcdir@/arrayobjectdefs.h @abs_builddir@/config.h @srcdir@/octave_to_python.h @srcdir@/pytavedefs.h @srcdir@/exceptions.h @srcdir@/python_to_octave.h ;
 

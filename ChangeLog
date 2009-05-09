@@ -1,13 +1,21 @@
+2009-05-09  David Grundberg  <individ@acc.umu.se>
+
+	* ax_octave_float.m4: New file.
+	* configure.ac: Added --enable-float-matrices configure option.
+
 2009-05-07  Jaroslav Hajek  <highegg@gmail.com>
 
-	* exceptions.h: Added octave_parse_exception class.
-	* package/pytave.py: Added ParseError exception and eval method.
-	* pytave.cc: Extracted make_error_message from func_eval. Added
-	str_eval
+	* exceptions.h (octave_parse_exception): New class.
+	* package/pytave.py: Added ParseError exception.
+	(eval): New function.
+	* pytave.cc (func_eval, make_error_message): Extracted
+	make_error_message from func_eval.
+	(str_eval): New function.
 
 2009-05-05  David Grundberg  <individ@acc.umu.se>
 
-	* python_to_octave.cc: Function pydict_to_octmap modified.
+	* python_to_octave.cc (pydict_to_octmap): Improved semantics and
+	error control.
 	* m4/ax_octave.m4, m4/ax_python_devel.m4: New files.
 	* m4/ax_python.m4: Removed.
 	* m4/ax_boost_python.m4, README, INSTALL: Rewritten.
@@ -16,14 +24,14 @@
 
 2008-11-17  Håkan Fors Nilsson  <c04hfn@cs.umu.se>
 
-	* octave_to_python.cc: Added functions octcell_to_pyobject and 
-	octmap_to_pyobject.
-	* python_to_octave.cc: Added functions pydict_to_octmap and 
-	pylist_to_cellarray.
+	* octave_to_python.cc (octcell_to_pyobject, octmap_to_pyobject):
+	New functions.
+	* python_to_octave.cc (pylist_to_cellarray, pydict_to_octmap):
+	New functions.
 
 2008-11-17  David Grundberg  <individ@acc.umu.se>
 
-	* pytave.cc: func_eval: Improved pytave.OctaveError messages, now
+	* pytave.cc (func_eval): Improved pytave.OctaveError messages, now
 	includes filename, function and line of offending m-file.
 
 2008-11-10  David Grundberg  <individ@acc.umu.se>
