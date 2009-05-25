@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 #
 # Copyright 2008 David Grundberg, Håkan Fors Nilsson
+# Copyright 2009 Jaroslav Hajek, VZLU Prague
 #
 # This file is part of Pytave.
 #
@@ -22,8 +23,8 @@
 import _pytave
 
 _pytave.init()
-(OctaveError, ValueConvertError, ObjectConvertError, ParseError) \
-				  = _pytave.get_exceptions();
+(OctaveError, ValueConvertError, ObjectConvertError, ParseError, \
+ VarNameError) = _pytave.get_exceptions();
 
 def feval(nargout, funcname, *arguments):
 
@@ -142,6 +143,100 @@ def rmpath(*paths):
 def path(*paths):
 	"""See Octave documentation"""
 	return _pytave.feval(1, "path", paths)[0]
+
+def getvar(name, fglobal = False):
+	 """Queries a variable by name from the current Octave scope.
+	 This is pretty much equivalent to calling eval(name), but is
+	 much faster because the Octave parser is bypassed. 
+	 
+	 global specifies that a global variable should be looked up;
+	 otherwise, local variable (in the current scope) is always
+	 searched for.
+
+	 If the variable is not defined, VarNameError exception is raised.
+	 """
+	 return _pytave.getvar(name, fglobal)
+
+def setvar(name, val, fglobal = False):
+	 """Sets a variable by name from the current Octave scope.
+	 It is quite fast because the Octave parser is bypassed. 
+
+	 global specifies that a global variable should be assigned to;
+	 otherwise, local variable (in the current scope) is always
+	 searched for.
+
+	 If the variable is not defined, a new variable is created.
+
+	 If the variable name is not valid, VarNameError exception is raised.
+	 """
+
+	 return _pytave.setvar(name, val, fglobal)
+
+def isvar(name, fglobal = False):
+	 """Checks whether a variable exists in the current Octave scope.
+	 It is quite fast because the Octave parser is bypassed. 
+
+	 global specifies that a global variable should be looked up;
+	 otherwise, local variable (in the current scope) is always
+	 searched for.
+
+	 If the variable is defined, returns True, otherwise returns False.
+	 """
+
+	 return _pytave.isvar(name, fglobal)
+
+def push_scope():
+	 """Creates a new anonymous local variable scope on the Octave call
+	 stack and sets it as the current Octave scope. Subsequent eval,
+	 getvar and setvar calls will affect variables within this scope.
+
+	 This is useful to do if you call the Octave engine from within
+	 multiple Python functions, to prevent them from hampering each
+	 other's data. As such, it is advisable to always create a local
+	 scope in a production code.
+	 """
+	 return _pytave.push_scope()
+
+def pop_scope():
+	 """Pops the current active scope (created previously by
+	 push_scope) off the Octave call stack. The previous scope
+	 will become the active scope.
+
+	 If already at the top-level scope, this function does nothing.
+	 """
+	 _pytave.pop_scope()
+ 
+class _local_scope:
+	 def __init__(self, func):
+		  self.func = func
+		  self.__name__ = func.__name__
+		  self.__doc__ = func.__doc__
+
+	 def __call__(self, *args, **kwargs):
+		  try:
+				_pytave.push_scope()
+				return self.func(*args, **kwargs)
+		  finally:
+				_pytave.pop_scope()
+
+def local_scope(func):
+	 """Decorates a function to use local Octave scope.
+	 Example:
+
+	 @pytave.local_scope
+	 def myfunc(a,b):
+		  <function body>
+
+	 is equivalent to:
+
+	 def myfunc(a,b):
+		  try:
+				pytave.push_scope()
+				<function body>
+		  finally:
+			  pytave.pop_scope()
+	 """
+	 return _local_scope(func)
 
 # Emacs
 #	Local Variables:

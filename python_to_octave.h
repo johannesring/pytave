@@ -21,6 +21,8 @@
 #define PYTHON_TO_OCTAVE_H
 
 namespace pytave {
+   void pyobj_to_octvalue(octave_value &oct_value,
+                          const boost::python::object &py_object);
    void pytuple_to_octlist(octave_value_list &octave_list,
                            const boost::python::tuple &python_tuple);
 }

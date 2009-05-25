@@ -113,6 +113,26 @@ namespace pytave {
          std::string error;
    };
 
+   class variable_name_exception {
+      public:
+         static bool init() {
+            excclass = PyErr_NewException(
+               const_cast<char*>("pytave.VarNameError"),
+               PyExc_RuntimeError, NULL);
+            return excclass != NULL;
+         };
+         static void translate_exception(variable_name_exception const &py_ex) {
+            PyErr_SetString(excclass, py_ex.error.c_str());
+         }
+         static PyObject *excclass;
+
+         variable_name_exception(std::string err) { error = err; };
+
+      private:
+         std::string error;
+
+   };
+
 }
 
 #endif /* PYTAVE_EXCEPTIONS_H */

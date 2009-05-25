@@ -1,3 +1,24 @@
+2009-05-13  Jaroslav Hajek  <highegg@gmail.com>
+
+	* exceptions.h (variable_name_exception): New exception class.
+	* exceptions.cc: Initialize it.
+	* octave_to_python.h (octvalue_to_pyobj): Declare prototype.
+	* pytave.cc (init): Init variable_name_exception.
+	(getvar): New function.
+	(setvar): New function.
+	(isvar): New function.
+	(push_scope): New function.
+	(pop_scope): New function.
+	* package/pytave.py (__init__): Init VarNameError.
+	(getvar): New function.
+	(setvar): New function.
+	(isvar): New function.
+	(push_scope): New function.
+	(pop_scope): New function.
+	(_local_scope): New decorator helper class.
+	(local_scope): New decorator.
+	* test/test.py: Include new tests.
+
 2009-05-09  David Grundberg  <individ@acc.umu.se>
 
 	* ax_octave_float.m4: New file.

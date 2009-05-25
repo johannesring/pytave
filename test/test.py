@@ -111,6 +111,49 @@ def testevalexpect(numargout, code, expectations):
 def testcellinvariant(value):
 	pass
 
+def testsetget(name,value):
+    try:
+	pytave.setvar(name,value)
+	result, = pytave.feval(1, "isequal", value, pytave.getvar(name))
+	if not result:
+	    print "FAIL: set/get: ", name," -> ",value," results diverged"
+    except Exception, e:
+	print "FAIL: set/get: ", name, ":"
+
+def testvarnameerror(name):
+    try:
+	pytave.setvar(name)
+	print "FAIL: ", name
+    except pytave.VarNameError:
+	pass
+    except Exception, e:
+	print "FAIL: ", name
+
+def testlocalscope(x):
+
+    @pytave.local_scope
+    def sloppy_factorial(x):
+	pytave.setvar("x",x)
+	xm1, = pytave.eval(1,"x-1")
+	if xm1 > 0:
+	    fxm1 = sloppy_factorial(xm1)
+	else:
+	    fxm1 = 1
+	pytave.setvar("fxm1",fxm1)
+	fx, = pytave.eval(1,"x * fxm1")
+	return fx
+
+    try:
+	fx = sloppy_factorial(x)
+	fx1 = 1.0
+	for k in range(1,x+1):
+	    fx1 = k * fx1
+	if fx != fx1:
+	    print 'FAIL: testlocalscope: result incorrect'
+    except Exception, e:
+	print "FAIL: testlocalscope:", (x,), e
+
+
 testequal('a')
 
 
@@ -220,3 +263,7 @@ testparseerror(1, "endfunction")
 testevalexpect(1, "2 + 2", (4,))
 testevalexpect(0, "{2}", ([2],))
 testevalexpect(2, "struct('foo', 2)", ({'foo': [2]},))
+
+testsetget("xxx", [1,2,3])
+
+testlocalscope(5)

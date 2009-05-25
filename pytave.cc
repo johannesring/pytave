@@ -1,5 +1,6 @@
 /*
  *  Copyright 2008 David Grundberg, Håkan Fors Nilsson
+ *  Copyright 2009 Jaroslav Hajek, VZLU Prague
  *
  *  This file is part of Pytave.
  *
@@ -28,6 +29,9 @@
 #include <octave/octave.h>
 #include <octave/ov.h>
 #include <octave/parse.h>
+#include <octave/utils.h>
+#include <octave/symtab.h>
+#include <octave/toplev.h>
 
 #include <iostream>
 #include <sstream>
@@ -49,7 +53,8 @@ namespace pytave { /* {{{ */
       if (!octave_error_exception::init()
           || !value_convert_exception::init()
           || !object_convert_exception::init()
-          || !octave_parse_exception::init()) {
+          || !octave_parse_exception::init()
+          || !variable_name_exception::init ()) {
          PyErr_SetString(PyExc_ImportError, "_pytave: init failed");
          return;
       }
@@ -77,7 +82,9 @@ namespace pytave { /* {{{ */
                         object(handle<PyObject>(
                                   object_convert_exception::excclass)),
                         object(handle<PyObject>(
-                                  octave_parse_exception::excclass)));
+                                  octave_parse_exception::excclass)),
+                        object(handle<PyObject>(
+                                  variable_name_exception::excclass)));
    }
 
    string make_error_message (const Octave_map& map) {
@@ -197,6 +204,70 @@ namespace pytave { /* {{{ */
          return make_tuple();
       }
    }
+
+   boost::python::object getvar(const string& name,
+                                bool global) {
+      octave_value val;
+
+      if (global)
+         val = symbol_table::global_varval(name);
+      else
+         val = symbol_table::varval(name);
+
+      if (val.is_undefined()) {
+         throw variable_name_exception (name + " not defined in current scope");
+      }
+
+      boost::python::object pyobject;
+      octvalue_to_pyobj(pyobject, val);
+
+      return pyobject;
+   }
+
+   void setvar(const string& name, 
+               const boost::python::object& pyobject,
+               bool global) {
+      octave_value val;
+
+      if (!valid_identifier(name)) {
+         throw variable_name_exception (name + " is not a valid identifier");
+      }
+
+      pyobj_to_octvalue(val, pyobject);
+
+      if (global)
+         symbol_table::global_varref(name) = val;
+      else
+         symbol_table::varref(name) = val;
+   }
+
+   bool isvar(const string& name, bool global) {
+      bool retval;
+
+      if (global)
+         retval = symbol_table::is_global (name);
+      else
+         retval = symbol_table::is_local_variable (name);
+
+      return retval;
+   }
+
+   int push_scope() {
+      symbol_table::scope_id local_scope = symbol_table::alloc_scope();
+      symbol_table::set_scope(local_scope);
+      octave_call_stack::push(local_scope);
+      return local_scope;
+   }
+
+   void pop_scope () {
+      symbol_table::scope_id curr_scope = symbol_table::current_scope();
+      if (curr_scope != symbol_table::top_scope())
+         {
+            symbol_table::erase_scope(curr_scope);
+            octave_call_stack::pop();
+         }
+   }
+      
 } /* namespace pytave }}} */
 
 BOOST_PYTHON_MODULE(_pytave) { /* {{{ */
@@ -205,6 +276,11 @@ BOOST_PYTHON_MODULE(_pytave) { /* {{{ */
    def("init", pytave::init);
    def("feval", pytave::func_eval);
    def("eval", pytave::str_eval);
+   def("getvar", pytave::getvar);
+   def("setvar", pytave::setvar);
+   def("isvar", pytave::isvar);
+   def("push_scope", pytave::push_scope);
+   def("pop_scope", pytave::pop_scope);
    def("get_exceptions", pytave::get_exceptions);
 
    register_exception_translator<pytave::pytave_exception>(
@@ -221,6 +297,9 @@ BOOST_PYTHON_MODULE(_pytave) { /* {{{ */
 
    register_exception_translator<pytave::value_convert_exception>(
       pytave::value_convert_exception::translate_exception);
+
+   register_exception_translator<pytave::variable_name_exception>(
+      pytave::variable_name_exception::translate_exception);
 
 } /* }}} */
 
