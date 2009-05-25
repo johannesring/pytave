@@ -1,5 +1,10 @@
 2009-05-25  Jaroslav Hajek  <highegg@gmail.com>
 
+	* python_to_octave.cc (pydict_to_octmap): Save key and val in an
+	array, to avoid doing duplicate conversions.
+
+2009-05-25  Jaroslav Hajek  <highegg@gmail.com>
+
 	* pytave.cc (init): Add parameter; only display Octave banner if
 	requested.
 	* package/pytave.cc: Determine whether the interpreter is

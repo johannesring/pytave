@@ -215,11 +215,34 @@ namespace pytave {
 
       bool has_dimensions = false;
 
+      Array<octave_value> vals (length);
+      Array<std::string> keys (length);
+
       for(octave_idx_type i = 0; i < length; i++) {
-         octave_value val;
+
+         std::string& key = keys(i);
 
          boost::python::tuple tuple =
             boost::python::extract<boost::python::tuple>(list[i])();
+
+         boost::python::extract<std::string> str(tuple[0]);
+         if(!str.check()) {
+            throw object_convert_exception(
+               string("Can not convert key of type ")
+               + PyEval_GetFuncName(boost::python::object(tuple[0]).ptr())
+               + PyEval_GetFuncDesc(boost::python::object(tuple[0]).ptr())
+               + " to a structure field name. Field names must be strings.");
+         }
+
+         key = str();
+
+         if (!valid_identifier(key)) {
+            throw object_convert_exception(
+               string("Can not convert key `") + key + "' to a structure "
+               "field name. Field names must be valid Octave identifiers.");
+         }
+
+         octave_value& val = vals(i);
 
          pyobj_to_octvalue(val, tuple[1]);
 
@@ -251,31 +274,9 @@ namespace pytave {
       Octave_map map = Octave_map(dims);
 
       for(octave_idx_type i = 0; i < length; i++) {
-         octave_value val;
-         std::string key;
 
-         boost::python::tuple tuple =
-            boost::python::extract<boost::python::tuple>(list[i])();
-
-         boost::python::extract<std::string> str(tuple[0]);
-         if(!str.check()) {
-            throw object_convert_exception(
-               string("Can not convert key of type ")
-               + PyEval_GetFuncName(boost::python::object(tuple[0]).ptr())
-               + PyEval_GetFuncDesc(boost::python::object(tuple[0]).ptr())
-               + " to a structure field name. Field names must be strings.");
-         }
-
-         key = str();
-
-         if (!valid_identifier(key)) {
-            throw object_convert_exception(
-               string("Can not convert key `") + key + "' to a structure "
-               "field name. Field names must be valid Octave identifiers.");
-         }
-
-         // FIXME: Second time around we convert exactly the same object
-         pyobj_to_octvalue(val, tuple[1]);
+         std::string& key = keys(i);
+         octave_value val = vals(i);
 
          if(!val.is_cell()) {
             map.assign(key, Cell(dims, val));
