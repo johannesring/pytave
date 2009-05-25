@@ -29,7 +29,7 @@ alimit_uint8 = Numeric.array([[0, 255, -1, 256]], Numeric.UnsignedInt8);
 
 # This eval call is not to be seen as a encouragement to use Pytave
 # like this. Create a separate .m-file with your complex Octave code.
-pytave.feval(1, "eval", "function [result] = test_return(arg) "
+pytave.feval(0, "eval", "function [result] = test_return(arg) "
 "result = arg; endfunction")
 
 pytave.feval(1, "test_return", 1)
@@ -208,10 +208,10 @@ testequal([])
 # Return cells with OK dimensions
 testvalueok("cell", 1, 3);
 testvalueok("cell", 1, 0)
+testvalueok("cell", 0, 0)
 
 # Return cells with incompatible dimensions
 testvalueerror("cell", 3, 1)
-testvalueerror("cell", 0, 0)
 testvalueerror("cell", 0, 1)
 
 # Dictionaries
@@ -261,7 +261,7 @@ if result.shape != (3, 1):
 
 testparseerror(1, "endfunction")
 testevalexpect(1, "2 + 2", (4,))
-testevalexpect(0, "{2}", ([2],))
+testevalexpect(1, "{2}", ([2],))
 testevalexpect(2, "struct('foo', 2)", ({'foo': [2]},))
 
 testsetget("xxx", [1,2,3])

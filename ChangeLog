@@ -1,3 +1,10 @@
+2009-05-25  Jaroslav Hajek  <highegg@gmail.com>
+
+	* octave_to_python.cc (is_1xn_or_0x0): New inline func.
+	(octcell_to_pyobject): Use it.
+	(octvalue_to_pyobj): Use it.
+	* test/test.py: Update & fix tests.
+
 2009-05-13  Jaroslav Hajek  <highegg@gmail.com>
 
 	* exceptions.h (variable_name_exception): New exception class.

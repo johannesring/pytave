@@ -254,12 +254,15 @@ namespace pytave {
       py_object = object(handle<PyObject>((PyObject *)pyarr));
    }
 
+   static inline bool is_1xn_or_0x0(const dim_vector& dv) {
+         return (dv.length() == 2 && (dv(0) == 1 || (dv(0) == 0 && dv(1) == 0)));
+   }
 
    static void octcell_to_pyobject(boost::python::object &py_object,
                                    const Cell& cell) {
       py_object = boost::python::list();
 
-      if(cell.dim1() != 1) {
+      if(!is_1xn_or_0x0(cell.dims())) {
          throw value_convert_exception(
             "Only one-dimensional (row mayor) cell arrays can be converted.");
       }
@@ -303,7 +306,7 @@ namespace pytave {
             throw value_convert_exception(
                "Conversion for this scalar not implemented");
       } else if (octvalue.is_string()) {
-         if (octvalue.all_strings().dim1() > 1)
+         if (! is_1xn_or_0x0 (octvalue.dims ()))
             throw value_convert_exception(
                "Multi-row character matrices can not be converted.");
          py_object = str(octvalue.string_value());
