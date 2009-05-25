@@ -21,8 +21,12 @@
 """Python to Octave bridge"""
 
 import _pytave
+import sys
 
-_pytave.init()
+arg0 = sys.argv[0]
+interactive = sys.stdin.isatty() and (arg0 == '' or arg0 == '-')
+
+_pytave.init(interactive)
 (OctaveError, ValueConvertError, ObjectConvertError, ParseError, \
  VarNameError) = _pytave.get_exceptions();
 

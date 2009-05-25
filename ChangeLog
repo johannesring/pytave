@@ -1,5 +1,12 @@
 2009-05-25  Jaroslav Hajek  <highegg@gmail.com>
 
+	* pytave.cc (init): Add parameter; only display Octave banner if
+	requested.
+	* package/pytave.cc: Determine whether the interpreter is
+	interactive.
+
+2009-05-25  Jaroslav Hajek  <highegg@gmail.com>
+
 	* octave_to_python.cc (is_1xn_or_0x0): New inline func.
 	(octcell_to_pyobject): Use it.
 	(octvalue_to_pyobj): Use it.

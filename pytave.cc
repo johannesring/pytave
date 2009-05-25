@@ -48,7 +48,7 @@ using namespace std;
 
 namespace pytave { /* {{{ */ 
 
-   void init() {
+   void init(bool silent = true) {
 
       if (!octave_error_exception::init()
           || !value_convert_exception::init()
@@ -64,8 +64,16 @@ namespace pytave { /* {{{ */
       const char* argv[] = {"octave",
                             "--no-line-editing",
                             "--no-history",
+                            "--silent",
                             NULL};
-      octave_main(3, const_cast<char**>(argv), 1);
+      int argc = 4;
+
+      if (silent) {
+         argv[3] = 0;
+         argc = 3;
+      }
+
+      octave_main(argc, const_cast<char**>(argv), 1);
 
       // Initialize Python Numeric Array
 
