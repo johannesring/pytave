@@ -1,5 +1,44 @@
 Version 0.1.1-bzr 
 
+2009-05-25
+
+* Added functionality for explicit manipulation of variables.
+  getvar, setvar, isvar can be used to get, set and query variables
+  in the current Octave scope.
+  Example:
+    pytave.setvar("x", 1)
+    pytave.eval(0,"x += 1")
+    x = pytave.getvar("x")
+
+* Added functionality to push/pop anonymous scopes on the Octave call 
+  stack. push_scope and pop_scope are provided to create an anonymous scope
+  and push it on Octave's call stack, to prevent cluttering other variables if
+  nested calls to pytave are in effect.
+
+  Example:
+    pytave.push_scope()
+    pytave.setvar("x", something)
+    pytave.eval(0, "... do something with x)
+    pytave.pop_scope() # wipes out x and restores its previous value, if any
+
+  Of course, for proper safety, try/finally block should be used to ensure the
+  cleanup. For convenience, a local_scope decorator is provided that encloses a
+  whole function in a push_scope/try/finally/pop_scope sequence:
+
+    @pytave.local_scope
+    def my_oct_add(x,y):
+        pytave.setvar("x",x)
+        pytave.setvar("y",y)
+        result, = pytave.eval(1, "x + y")
+        return result
+
+  this function, when called, will not affect the top-level values of x and y, if
+  any.
+
+* The Octave welcome banner is now only displayed if Python is run interactively.
+
+* {}, "" and '' are now accepted as return values and converted to an empty list/string.
+
 2009-05-07
 
 * Added an eval function. A string of Octave code can be executed
