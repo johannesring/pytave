@@ -1,5 +1,6 @@
 /*
  *  Copyright 2008 David Grundberg, Håkan Fors Nilsson
+ *  Copyright 2009 VZLU Prague
  *
  *  This file is part of Pytave.
  *
@@ -21,6 +22,7 @@
 #include <boost/python.hpp>
 #include <boost/python/numeric.hpp>
 #include "arrayobjectdefs.h"
+#include <boost/type_traits/integral_constant.hpp>
 #undef HAVE_STAT /* both boost.python and octave defines HAVE_STAT... */
 #include <octave/oct.h>
 #include <octave/oct-map.h>
@@ -67,13 +69,43 @@ namespace pytave {
       }
    }
 
+   template <class PythonPrimitive, class OctaveBase>
+   static void copy_pyarrobj_to_octarray_dispatch(OctaveBase &matrix,
+                                       const PyArrayObject* const pyarr,
+                                       const boost::true_type&) {
+      copy_pyarrobj_to_octarray<PythonPrimitive, OctaveBase>
+         (matrix, pyarr, 0, 1, 0, 0);
+   }
+
+   template <class PythonPrimitive, class OctaveBase>
+   static void copy_pyarrobj_to_octarray_dispatch(OctaveBase &matrix,
+                                       const PyArrayObject* const pyarr,
+                                       const boost::false_type&) {
+      assert(0);
+   }
+
+   template <class X, class Y> class matching_type : public boost::false_type { };
+   template <class X> class matching_type<X, X> : public boost::true_type { };
+   template <class X> class matching_type<X, octave_int<X> > : public boost::true_type { };
+#ifndef PYTAVE_USE_OCTAVE_FLOATS
+   template <> class matching_type<float, double> : public boost::true_type { };
+   template <> class matching_type<FloatComplex, Complex> : public boost::true_type { };
+#endif
+
+   template <class PythonPrimitive, class OctaveBase>
+   static void copy_pyarrobj_to_octarray_dispatch(OctaveBase &matrix,
+                                       const PyArrayObject* const pyarr) {
+      matching_type<PythonPrimitive, typename OctaveBase::element_type> inst;
+      copy_pyarrobj_to_octarray_dispatch<PythonPrimitive, OctaveBase> (matrix, pyarr, inst);
+   }
+
    template <class OctaveBase>
    static void copy_pyarrobj_to_octarray_boot(OctaveBase &matrix,
                                        const PyArrayObject* const pyarr) {
 
 #define ARRAYCASE(AC_pyarrtype, AC_primitive) case AC_pyarrtype: \
-         copy_pyarrobj_to_octarray<AC_primitive, OctaveBase>\
-         (matrix, pyarr, 0, 1, 0, 0); \
+         copy_pyarrobj_to_octarray_dispatch<AC_primitive, OctaveBase>\
+         (matrix, pyarr); \
          break; \
 
       switch (pyarr->descr->type_num) {
@@ -91,8 +123,12 @@ namespace pytave {
 
          /* Commonly Numeric.array(..., Numeric.Float) */
          ARRAYCASE(PyArray_DOUBLE, double)
-//         ARRAYCASE(PyArray_CFLOAT, )
-//         ARRAYCASE(PyArray_CDOUBLE, )
+
+         /* Commonly Numeric.array(..., Numeric.Complex32) */
+         ARRAYCASE(PyArray_CFLOAT, FloatComplex)
+
+         /* Commonly Numeric.array(..., Numeric.Complex) */
+         ARRAYCASE(PyArray_CDOUBLE, Complex)
 //         ARRAYCASE(PyArray_OBJECT, )
          default:
             throw object_convert_exception(
@@ -176,6 +212,16 @@ namespace pytave {
 #endif
          case PyArray_DOUBLE:
             pyarrobj_to_octvalueNd<NDArray>(octvalue, pyarr, dims);
+            break;
+         case PyArray_CFLOAT:
+#ifdef PYTAVE_USE_OCTAVE_FLOATS
+            pyarrobj_to_octvalueNd<FloatComplexNDArray>(octvalue, pyarr, dims);
+            break;
+#else
+            /* fallthrough */
+#endif
+         case PyArray_CDOUBLE:
+            pyarrobj_to_octvalueNd<ComplexNDArray>(octvalue, pyarr, dims);
             break;
          default:
             throw object_convert_exception(
@@ -304,6 +350,7 @@ namespace pytave {
                           const boost::python::object &py_object) {
       extract<int> intx(py_object);
       extract<double> doublex(py_object);
+      extract<Complex> complexx(py_object);
       extract<string> stringx(py_object);
       extract<numeric::array> arrayx(py_object);
       extract<boost::python::list> listx(py_object);
@@ -312,6 +359,8 @@ namespace pytave {
          oct_value = intx();
       } else if (doublex.check()) {
          oct_value = doublex();
+      } else if (complexx.check()) {
+         oct_value = complexx();
       } else if (arrayx.check()) {
          pyarr_to_octvalue(oct_value, (PyArrayObject*)py_object.ptr());
       } else if (stringx.check()) {

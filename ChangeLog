@@ -1,5 +1,17 @@
 2009-05-26  Jaroslav Hajek  <highegg@gmail.com>
 
+	* octave_to_python.cc (octvalue_to_pyarrobj): Support Complex
+	and FloatComplex values.
+	(octvalue_to_pyobj): Support complex scalars.
+	* python_to_octave.cc (copy_pyarrobj_to_octarray_dispatch):
+	New template function.
+	(matching_type): New helper traits class.
+	(copy_pyarrobj_to_octarray_dispatch): Support complex types.
+	(pyarrobj_to_octvalue): Support complex scalars.
+	* test/test.py: Add tests for complex values.
+
+2009-05-26  Jaroslav Hajek  <highegg@gmail.com>
+
 	* octave_to_python.cc: New #include (boost/type_traits).
 	(copy_octarray_to_pyarrobj): Don't use .value(); don't	specialize.
 	(create_array (..., boost::true_type)): New overload (forward).

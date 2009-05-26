@@ -20,6 +20,8 @@ arr1a = Numeric.array([[1, 2, 3, 4]])
 arr2f = Numeric.array([[1.32, 2, 3, 4],[5,6,7,8]], Numeric.Float32)
 arr2d = Numeric.array([[1.17, 2, 3, 4],[5,6,7,8]], Numeric.Float)
 arr3f = Numeric.array([[[1.32, 2, 3, 4],[5,6,7,8]],[[9, 10, 11, 12],[13,14,15,16]]], Numeric.Float32)
+arr1c = Numeric.array([[1+2j, 3+4j, 5+6j, 7+0.5j]], Numeric.Complex)
+arr1fc = Numeric.array([[1+2j, 3+4j, 5+6j, 7+0.5j]], Numeric.Complex32)
 
 alimit_int32 = Numeric.array([[-2147483648, 2147483647]], Numeric.Int32);
 alimit_int16 = Numeric.array([[-32768, 32767, -32769, 32768]], Numeric.Int16);
@@ -182,7 +184,8 @@ testmatrix(arr1fT)
 testmatrix(arr1fT2)
 testmatrix(arr1i)
 testmatrix(arr1b)
-testmatrix(arr1i32)
+testmatrix(arr1c)
+testmatrix(arr1fc)
 
 # 2d arrays
 testmatrix(arr2f)

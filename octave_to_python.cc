@@ -1,5 +1,6 @@
 /*
  *  Copyright 2008 David Grundberg, Håkan Fors Nilsson
+ *  Copyright 2009 VZLU Prague
  *
  *  This file is part of Pytave.
  *
@@ -155,13 +156,11 @@ namespace pytave {
    }
 
    static PyArrayObject *octvalue_to_pyarrobj(const octave_value &matrix) {
-      if (matrix.is_complex_type ()) {
-            throw value_convert_exception(
-               "Complex Octave matrices conversion not implemented");
-      }
-
       if (matrix.is_double_type ()) {
-         if (matrix.is_real_type()) {
+         if (matrix.is_complex_type ()) {
+            return create_array<Complex, ComplexNDArray>
+               (matrix.complex_array_value(), PyArray_CDOUBLE);
+         } else if (matrix.is_real_type()) {
             return create_array<double, NDArray>(matrix.array_value(),
                                                  PyArray_DOUBLE);
          } else
@@ -170,7 +169,10 @@ namespace pytave {
 
 #ifdef PYTAVE_USE_OCTAVE_FLOATS
       if (matrix.is_single_type ()) {
-         if (matrix.is_real_type()) {
+         if (matrix.is_complex_type ()) {
+            return create_array<FloatComplex, FloatComplexNDArray>
+               (matrix.float_complex_array_value(), PyArray_CFLOAT);
+         } else if (matrix.is_real_type()) {
             return create_array<float, FloatNDArray>(
                matrix.float_array_value(), PyArray_FLOAT);
          } else
@@ -263,6 +265,8 @@ namespace pytave {
             py_object = object(octvalue.bool_value());
          else if (octvalue.is_real_scalar())
             py_object = object(octvalue.double_value());
+         else if (octvalue.is_complex_scalar())
+            py_object = object(octvalue.complex_value());
          else if (octvalue.is_integer_type())
             py_object = object(octvalue.int_value());
          else
