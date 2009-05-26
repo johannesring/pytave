@@ -1,3 +1,12 @@
+2009-05-26  Jaroslav Hajek  <highegg@gmail.com>
+
+	* octave_to_python.cc: New #include (boost/type_traits).
+	(copy_octarray_to_pyarrobj): Don't use .value(); don't	specialize.
+	(create_array (..., boost::true_type)): New overload (forward).
+	(create_array (..., boost::false_type)): New overload (dummy).
+	(create_uint_array): Pick proper overload.
+	(create_sint_array): Pick proper overload.
+
 2009-05-25  Jaroslav Hajek  <highegg@gmail.com>
 
 	* python_to_octave.cc (pydict_to_octmap): Save key and val in an

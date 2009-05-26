@@ -20,6 +20,7 @@
 #include "arrayobjectdefs.h"
 #include <boost/python.hpp>
 #include <boost/python/numeric.hpp>
+#include <boost/type_traits/integral_constant.hpp>
 #undef HAVE_STAT /* both boost::python and octave define HAVE_STAT... */
 #include <octave/oct.h>
 #include <octave/Matrix.h>
@@ -59,7 +60,7 @@ namespace pytave {
          // Last dimension, base case
          for (int i = 0; i < pyarr->dimensions[dimension]; i++) {
             *(PythonPrimitive *)&ptr[offset + i*pyarr->strides[dimension]]
-               = matrix.elem(matindex + i*matstride).value();
+               = matrix.elem(matindex + i*matstride);
          }
       } else {
          for (int i = 0; i < pyarr->dimensions[dimension]; i++) {
@@ -73,64 +74,6 @@ namespace pytave {
          }
       }
    }
-
-   template <>
-   void copy_octarray_to_pyarrobj<double, NDArray>(
-                                  PyArrayObject *pyarr,
-                                  const NDArray &matrix,
-                                  const unsigned int matindex,
-                                  const unsigned int matstride,
-                                  const int dimension,
-                                  const unsigned int offset) {
-      unsigned char *ptr = (unsigned char*) pyarr->data;
-      if (dimension == pyarr->nd - 1) {
-         // Last dimension, base case
-         for (int i = 0; i < pyarr->dimensions[dimension]; i++) {
-            *(double *)&ptr[offset + i*pyarr->strides[dimension]]
-               = matrix.elem(matindex + i*matstride);
-         }
-      } else {
-         for (int i = 0; i < pyarr->dimensions[dimension]; i++) {
-            copy_octarray_to_pyarrobj<double, NDArray>(
-               pyarr,
-               matrix,
-               matindex + i*matstride,
-               matstride * pyarr->dimensions[dimension],
-               dimension + 1,
-               offset + i*pyarr->strides[dimension]);
-         }
-      }
-   }
-
-#ifdef PYTAVE_USE_OCTAVE_FLOATS
-   template <>
-   void copy_octarray_to_pyarrobj<float, FloatNDArray>(
-                                  PyArrayObject *pyarr,
-                                  const FloatNDArray &matrix,
-                                  const unsigned int matindex,
-                                  const unsigned int matstride,
-                                  const int dimension,
-                                  const unsigned int offset) {
-      unsigned char *ptr = (unsigned char*) pyarr->data;
-      if (dimension == pyarr->nd - 1) {
-         // Last dimension, base case
-         for (int i = 0; i < pyarr->dimensions[dimension]; i++) {
-            *(float *)&ptr[offset + i*pyarr->strides[dimension]]
-               = matrix.elem(matindex + i*matstride);
-         }
-      } else {
-         for (int i = 0; i < pyarr->dimensions[dimension]; i++) {
-            copy_octarray_to_pyarrobj<float, FloatNDArray>(
-               pyarr,
-               matrix,
-               matindex + i*matstride,
-               matstride * pyarr->dimensions[dimension],
-               dimension + 1,
-               offset + i*pyarr->strides[dimension]);
-         }
-      }
-   }
-#endif /* PYTAVE_USE_OCTAVE_FLOATS */
 
    static PyArrayObject *createPyArr(const dim_vector &dims,
                                      int pyarrtype) {
@@ -157,14 +100,30 @@ namespace pytave {
       return pyarr;
    }
 
+   template <class PythonPrimitive, class OctaveBase>
+   static PyArrayObject *create_array(const OctaveBase &octarr,
+                                      int pyarraytype, boost::true_type) {
+      return create_array<PythonPrimitive, OctaveBase> (octarr, pyarraytype);
+   }
+
+   template <class PythonPrimitive, class OctaveBase>
+   static PyArrayObject *create_array(const OctaveBase &octarr,
+                                      int pyarraytype, boost::false_type) {
+      assert(0);
+      return 0;
+   }
+
    template <class CLASS, size_t bytes>
    inline static PyArrayObject *create_uint_array(CLASS value) {
       if (bytes == sizeof(int)) {
-         return create_array<unsigned int, CLASS>(value, PyArray_UINT);
+         boost::integral_constant<bool, bytes==sizeof(int)> inst;
+         return create_array<unsigned int, CLASS>(value, PyArray_UINT, inst);
       } else if (bytes == sizeof(char)) {
-         return create_array<unsigned char, CLASS>(value, PyArray_UBYTE);
+         boost::integral_constant<bool, bytes==sizeof(char)> inst;
+         return create_array<unsigned char, CLASS>(value, PyArray_UBYTE, inst);
       } else if (bytes == sizeof(short)) {
-         return create_array<unsigned short, CLASS>(value, PyArray_USHORT);
+         boost::integral_constant<bool, bytes==sizeof(short)> inst;
+         return create_array<unsigned short, CLASS>(value, PyArray_USHORT, inst);
       } else {
          ostringstream os;
          os << "Numeric arrays doesn't support unsigned " << (bytes*8)
@@ -176,13 +135,17 @@ namespace pytave {
    template <class CLASS, size_t bytes>
    inline static PyArrayObject *create_sint_array(CLASS value) {
       if (bytes == sizeof(long)) {
-         return create_array<long, CLASS>(value, PyArray_LONG);
+         boost::integral_constant<bool, bytes==sizeof(long)> inst;
+         return create_array<long, CLASS>(value, PyArray_LONG, inst);
       } else if (bytes == sizeof(int)) {
-         return create_array<signed int, CLASS>(value, PyArray_INT);
+         boost::integral_constant<bool, bytes==sizeof(int)> inst;
+         return create_array<signed int, CLASS>(value, PyArray_INT, inst);
       } else if (bytes == sizeof(char)) {
-         return create_array<signed char, CLASS>(value, PyArray_SBYTE);
+         boost::integral_constant<bool, bytes==sizeof(char)> inst;
+         return create_array<signed char, CLASS>(value, PyArray_SBYTE, inst);
       } else if (bytes == sizeof(short)) {
-         return create_array<signed short, CLASS>(value, PyArray_SHORT);
+         boost::integral_constant<bool, bytes==sizeof(short)> inst;
+         return create_array<signed short, CLASS>(value, PyArray_SHORT, inst);
       } else {
          ostringstream os;
          os << "Numeric arrays doesn't support signed " << (bytes*8)
