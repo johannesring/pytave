@@ -87,10 +87,8 @@ namespace pytave {
    template <class X, class Y> class matching_type : public boost::false_type { };
    template <class X> class matching_type<X, X> : public boost::true_type { };
    template <class X> class matching_type<X, octave_int<X> > : public boost::true_type { };
-#ifndef PYTAVE_USE_OCTAVE_FLOATS
    template <> class matching_type<float, double> : public boost::true_type { };
    template <> class matching_type<FloatComplex, Complex> : public boost::true_type { };
-#endif
 
    template <class PythonPrimitive, class OctaveBase>
    static void copy_pyarrobj_to_octarray_dispatch(OctaveBase &matrix,
@@ -204,22 +202,14 @@ namespace pytave {
             }
             break;
          case PyArray_FLOAT:
-#ifdef PYTAVE_USE_OCTAVE_FLOATS
             pyarrobj_to_octvalueNd<FloatNDArray>(octvalue, pyarr, dims);
             break;
-#else
-            /* fallthrough */
-#endif
          case PyArray_DOUBLE:
             pyarrobj_to_octvalueNd<NDArray>(octvalue, pyarr, dims);
             break;
          case PyArray_CFLOAT:
-#ifdef PYTAVE_USE_OCTAVE_FLOATS
             pyarrobj_to_octvalueNd<FloatComplexNDArray>(octvalue, pyarr, dims);
             break;
-#else
-            /* fallthrough */
-#endif
          case PyArray_CDOUBLE:
             pyarrobj_to_octvalueNd<ComplexNDArray>(octvalue, pyarr, dims);
             break;

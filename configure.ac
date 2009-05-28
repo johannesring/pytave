@@ -17,35 +17,9 @@ AC_CONFIG_HEADER([config.h])
 
 AC_PRESERVE_HELP_ORDER
 
-AC_ARG_ENABLE(float-matrices,
-	[AS_HELP_STRING([--enable-float-matrices],
-		[use Octave float matrices (experimental)
-		@<:@default=no@:>@])],
-	[pytave_enable_float="$enableval"],
-	[pytave_enable_float=no]) dnl TODO: Change to check someday
-
 pytave_libs_ok=
 
 AX_OCTAVE([], [], [pytave_libs_ok=no])
-
-AS_IF([test "x$pytave_enable_float" = "xcheck" dnl
-            -o "x$pytave_enable_float" = "xyes"], [
-	AX_OCTAVE_FLOAT([
-		AC_DEFINE([PYTAVE_USE_OCTAVE_FLOATS], [],
-			[Define to enable conversion of Octave float
-			matrices. If not defined, float matrices are
-			expanded to double matrices])
-	], [
-		AS_IF([test "x$pytave_enable_float" = "xyes"], [
-			AC_WARN([[
-========================================================================
-Float matrices enabled, but could not compile test program against
-Octave.
-========================================================================]])
-			pytave_libs_ok=no
-		])
-	])
-])
 
 # Pick a Python library to use
 AX_PYTHON_DEVEL([], [], [pytave_libs_ok=no])

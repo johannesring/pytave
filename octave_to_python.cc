@@ -167,7 +167,6 @@ namespace pytave {
             throw value_convert_exception("Unknown double matrix type");
       }
 
-#ifdef PYTAVE_USE_OCTAVE_FLOATS
       if (matrix.is_single_type ()) {
          if (matrix.is_complex_type ()) {
             return create_array<FloatComplex, FloatComplexNDArray>
@@ -178,7 +177,6 @@ namespace pytave {
          } else
             throw value_convert_exception("Unknown float matrix type");
       }
-#endif
 
       if (matrix.is_int64_type()) {
          return create_sint_array<int64NDArray, sizeof(int64_t)>(

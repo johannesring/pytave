@@ -1,3 +1,9 @@
+2009-05-28  Jaroslav Hajek  <highegg@gmail.com>
+
+	* configure.ac: Remove --enable-float-matrices option.
+	* octave_to_python.cc: Remove uses of PYTAVE_USE_OCTAVE_FLOAT.
+	* python_to_octave.cc: Ditto.
+
 2009-05-26  Jaroslav Hajek  <highegg@gmail.com>
 
 	* octave_to_python.cc (octvalue_to_pyarrobj): Support Complex
