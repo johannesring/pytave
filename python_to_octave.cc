@@ -108,7 +108,28 @@ namespace pytave {
          (matrix, pyarr); \
          break; \
 
-      switch (pyarr->descr->type_num) {
+      // Prefer int to other types of the same size.
+      // E.g. on x86 architectures: sizeof(long) == sizeof(int).
+      int type_num = pyarr->descr->type_num;
+      switch (type_num) {
+         case PyArray_LONG:
+            if (sizeof(long) == sizeof(int)) {
+               type_num = PyArray_INT;
+            }
+            break;
+         case PyArray_SHORT:
+            if (sizeof(short) == sizeof(int)) {
+               type_num = PyArray_INT;
+            }
+            break;
+         case PyArray_USHORT:
+            if (sizeof(unsigned short) == sizeof(unsigned int)) {
+               type_num = PyArray_UINT;
+            }
+            break;
+      }
+
+      switch (type_num) {
 //         ARRAYCASE(PyArray_CHAR, )
          ARRAYCASE(PyArray_UBYTE,  unsigned char)
          ARRAYCASE(PyArray_SBYTE,  signed   char)
