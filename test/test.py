@@ -22,6 +22,10 @@ arr2d = Numeric.array([[1.17, 2, 3, 4],[5,6,7,8]], Numeric.Float)
 arr3f = Numeric.array([[[1.32, 2, 3, 4],[5,6,7,8]],[[9, 10, 11, 12],[13,14,15,16]]], Numeric.Float32)
 arr1c = Numeric.array([[1+2j, 3+4j, 5+6j, 7+0.5j]], Numeric.Complex)
 arr1fc = Numeric.array([[1+2j, 3+4j, 5+6j, 7+0.5j]], Numeric.Complex32)
+arr1o = Numeric.array([["abc",1.0,2+3j]],Numeric.PyObject)
+arr2o = Numeric.array([["abc",1.0,2+3j],[4.0,arr1i,"def"]],Numeric.PyObject)
+arr1ch = Numeric.array(["abc"],Numeric.Character)
+arr2ch = Numeric.array(["abc","def"],Numeric.Character)
 
 alimit_int32 = Numeric.array([[-2147483648, 2147483647]], Numeric.Int32);
 alimit_int16 = Numeric.array([[-32768, 32767, -32769, 32768]], Numeric.Int16);
@@ -270,3 +274,8 @@ testevalexpect(2, "struct('foo', 2)", ({'foo': [2]},))
 testsetget("xxx", [1,2,3])
 
 testlocalscope(5)
+
+# Try converting Numeric arrays of objects and characters
+
+testexpect(arr1o,arr1o[0].tolist())
+testexpect(arr1ch,arr1ch.tostring())

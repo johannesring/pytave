@@ -1,3 +1,21 @@
+2009-06-03  Jaroslav Hajek  <highegg@gmail.com>
+
+	* python_to_octave.cc (copy_pyarrobj_to_octarray<PyObject *,
+	Cell>): New template specialization.
+	(matching_type<PyObject *, octave_value>): Ditto.
+	(copy_pyarrobj_to_octarray_boot): Include PyArray_CHAR
+	and PyArray_Object cases.
+	(pyarr_to_octvalue): Likewise.
+	* test/test.py: Add tests for the new conversions.
+
+2009-06-03  David Grundberg  <individ@acc.umu.se>
+
+	* octave_to_python.cc (create_uint_array, create_sint_array):
+	Prefer int to other datatypes of identical size.
+	(is_1xn_or_0x0): Whitespace.
+	* python_to_octave.cc (copy_pyarrobj_to_octarray_dispatch): Prefer
+	int to other datatypes of identical size.
+
 2009-05-28  Jaroslav Hajek  <highegg@gmail.com>
 
 	* configure.ac: Remove --enable-float-matrices option.
