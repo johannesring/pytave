@@ -117,13 +117,14 @@ namespace pytave {
    template <class CLASS, size_t bytes>
    inline static PyArrayObject *create_uint_array(CLASS value) {
       if (bytes == sizeof(int)) {
-         boost::integral_constant<bool, bytes==sizeof(int)> inst;
+         boost::integral_constant<bool, bytes == sizeof(int)> inst;
          return create_array<unsigned int, CLASS>(value, PyArray_UINT, inst);
       } else if (bytes == sizeof(char)) {
-         boost::integral_constant<bool, bytes==sizeof(char)> inst;
+         boost::integral_constant<bool, bytes == sizeof(char)> inst;
          return create_array<unsigned char, CLASS>(value, PyArray_UBYTE, inst);
       } else if (bytes == sizeof(short)) {
-         boost::integral_constant<bool, bytes==sizeof(short)> inst;
+         boost::integral_constant<bool,
+            bytes == sizeof(short) && bytes != sizeof(int)> inst;
          return create_array<unsigned short, CLASS>(value, PyArray_USHORT, inst);
       } else {
          ostringstream os;
@@ -135,17 +136,21 @@ namespace pytave {
 
    template <class CLASS, size_t bytes>
    inline static PyArrayObject *create_sint_array(CLASS value) {
-      if (bytes == sizeof(long)) {
-         boost::integral_constant<bool, bytes==sizeof(long)> inst;
-         return create_array<long, CLASS>(value, PyArray_LONG, inst);
-      } else if (bytes == sizeof(int)) {
-         boost::integral_constant<bool, bytes==sizeof(int)> inst;
+      if (bytes == sizeof(int)) {
+         // We test int first since we prefer int to other datatypes of the
+         // same size.
+         boost::integral_constant<bool, bytes == sizeof(int)> inst;
          return create_array<signed int, CLASS>(value, PyArray_INT, inst);
+      } else if (bytes == sizeof(long)) {
+         boost::integral_constant<bool,
+            bytes==sizeof(long) && bytes != sizeof(int)> inst;
+         return create_array<long, CLASS>(value, PyArray_LONG, inst);
       } else if (bytes == sizeof(char)) {
-         boost::integral_constant<bool, bytes==sizeof(char)> inst;
+         boost::integral_constant<bool, bytes == sizeof(char)> inst;
          return create_array<signed char, CLASS>(value, PyArray_SBYTE, inst);
       } else if (bytes == sizeof(short)) {
-         boost::integral_constant<bool, bytes==sizeof(short)> inst;
+         boost::integral_constant<bool,
+            bytes==sizeof(short) && bytes != sizeof(int)> inst;
          return create_array<signed short, CLASS>(value, PyArray_SHORT, inst);
       } else {
          ostringstream os;
@@ -218,7 +223,7 @@ namespace pytave {
    }
 
    static inline bool is_1xn_or_0x0(const dim_vector& dv) {
-         return (dv.length() == 2 && (dv(0) == 1 || (dv(0) == 0 && dv(1) == 0)));
+      return (dv.length() == 2 && (dv(0) == 1 || (dv(0) == 0 && dv(1) == 0)));
    }
 
    static void octcell_to_pyobject(boost::python::object &py_object,
