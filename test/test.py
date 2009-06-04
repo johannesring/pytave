@@ -3,6 +3,7 @@
 
 import pytave
 import Numeric
+import traceback
 
 print "No messages indicates test pass."
 
@@ -35,48 +36,52 @@ alimit_uint8 = Numeric.array([[0, 255, -1, 256]], Numeric.UnsignedInt8);
 
 # This eval call is not to be seen as a encouragement to use Pytave
 # like this. Create a separate .m-file with your complex Octave code.
-pytave.feval(0, "eval", "function [result] = test_return(arg) "
-"result = arg; endfunction")
+pytave.eval(0, "function [result] = test_return(arg); result = arg; endfunction")
 
 pytave.feval(1, "test_return", 1)
+
+def fail(msg, exc=None):
+	print "FAIL:", msg
+	traceback.print_stack()
+	if exc is not None:
+		traceback.print_exc(exc)
+	print ""
 
 def testequal(value):
 	try:
 		nvalue, = pytave.feval(1, "test_return", value)
 		if nvalue != value:
-			print "FAIL as ", value, " != ", nvalue
+			fail("as %s != %s" % (value, nvalue))
 	except TypeError, e:
-		print "FAIL: ", value,":", e
+		fail(value, e)
 
 def testexpect(value, expected):
 	try:
 		nvalue, = pytave.feval(1, "test_return", value)
 		if nvalue != expected:
-			print "FAIL as ", nvalue, " != ", expected, ","
-			print "        sent in", value
+			fail("sent in %s, expecting %s, got %s", (value, expected, nvalue))
 	except TypeError, e:
-		print "FAIL: ", value,":", e
-
+		fail(value, e)
 
 def testmatrix(value):
 	try:
 		nvalue, = pytave.feval(1, "test_return", value)
-#		print "test", (value,)
-#		print "returned ", (nvalue,)
 		class1 = pytave.feval(1, "class", value)
 		class2 = pytave.feval(1, "class", nvalue)
 		if nvalue != value:
-			print "FAIL as ", value, " != ", nvalue
+			fail("as %s != %s" % (value, nvalue))
 		if value.shape != nvalue.shape:
-			print "Size check failed for: ", (value,) ,". Got ",value.shape, "and later", nvalue.shape, " =++ ", (nvalue,)
+			fail("Size check failed for: %s. Expected shape %s, got %s  with shape %s" \
+			%(value, value.shape, nvalue.shape, nvalue))
 		if class1 != class2:
-			print "Type check failed for: ", (value,) ,". Got ",class1, "and later", class2
+			fail( "Type check failed for: %s. Expected %s. Got %s."
+			%(value, class1, class2))
 	except TypeError, e:
-		print "Execute failed: ", value,":", e
+		fail("Execute failed: %s" % value, e)
 
 def testobjecterror(value):
 	try:
-		print pytave.feval(1, "test_return", value);
+		pytave.feval(1, "test_return", value);
 		print "FAIL:", (value,)
 	except pytave.ObjectConvertError:
 		pass
@@ -85,16 +90,16 @@ def testobjecterror(value):
 
 def testvalueerror(*value):
 	try:
-		print pytave.feval(1, *value);
-		print "FAIL:", (value,)
+		pytave.feval(1, *value);
+		fail(value)
 	except pytave.ValueConvertError:
 		pass
 	except Exception, e:
-		print "FAIL", (value,), e
+		fail(value, e)
 
 def testparseerror(*value):
 	try:
-		print pytave.eval(*value);
+		pytave.eval(*value);
 		print "FAIL:", (value,)
 	except pytave.ParseError:
 		pass
@@ -111,41 +116,40 @@ def testevalexpect(numargout, code, expectations):
 	try:
 		results = pytave.eval(numargout, code);
 		if results != expectations:
-			print "FAIL: eval: ", code, " because", results, " != ", expectations, ","
+			fail("eval: %s : because %s != %s" % (code, results, expectations))
 	except Exception, e:
-		print "FAIL: eval:", code, ":", e
-def testcellinvariant(value):
-	pass
+		fail("eval: %s" % code, e)
 
-def testsetget(name,value):
-    try:
-	pytave.setvar(name,value)
-	result, = pytave.feval(1, "isequal", value, pytave.getvar(name))
-	if not result:
-	    print "FAIL: set/get: ", name," -> ",value," results diverged"
-    except Exception, e:
-	print "FAIL: set/get: ", name, ":"
+def testsetget(variables, name, value):
+	try:
+		variables[name] = value
+		if name not in variables:
+			print "FAIL: set/get: ", name,": Should exist, not there."
+		result, = pytave.feval(1, "isequal", value, variables[name])
+		if not result:
+			print "FAIL: set/get: ", name," -> ",value," results diverged"
+	except Exception, e:
+		print "FAIL: set/get: ", name, ":", e
 
-def testvarnameerror(name):
-    try:
-	pytave.setvar(name)
-	print "FAIL: ", name
-    except pytave.VarNameError:
-	pass
-    except Exception, e:
-	print "FAIL: ", name
+def testexception(exception, func):
+	try:
+		func()
+		print "FAIL: ", name
+	except Exception, e:
+		if not isinstance(e, exception):
+			print "FAIL:", name, ":", e
 
 def testlocalscope(x):
 
     @pytave.local_scope
     def sloppy_factorial(x):
-	pytave.setvar("x",x)
+	pytave.locals["x"] = x
 	xm1, = pytave.eval(1,"x-1")
 	if xm1 > 0:
 	    fxm1 = sloppy_factorial(xm1)
 	else:
 	    fxm1 = 1
-	pytave.setvar("fxm1",fxm1)
+	pytave.locals["fxm1"] = fxm1
 	fx, = pytave.eval(1,"x * fxm1")
 	return fx
 
@@ -155,9 +159,9 @@ def testlocalscope(x):
 	for k in range(1,x+1):
 	    fx1 = k * fx1
 	if fx != fx1:
-	    print 'FAIL: testlocalscope: result incorrect'
+	    fail('testlocalscope: result incorrect')
     except Exception, e:
-	print "FAIL: testlocalscope:", (x,), e
+	fail("testlocalscope: %s" % (x,), e)
 
 
 testequal('a')
@@ -271,7 +275,28 @@ testevalexpect(1, "2 + 2", (4,))
 testevalexpect(1, "{2}", ([2],))
 testevalexpect(2, "struct('foo', 2)", ({'foo': [2]},))
 
-testsetget("xxx", [1,2,3])
+testsetget(pytave.locals, "xxx", [1,2,3])
+testsetget(pytave.globals, "xxx", [1,2,3])
+
+def func():
+	pytave.locals["this is not a valid Octave identifier"] = 1
+testexception(pytave.VarNameError, func)
+
+def func():
+	pytave.locals["nonexistentvariable"]
+testexception(KeyError, func)
+
+def func(key):
+	pytave.locals[key] = 1
+testexception(TypeError, lambda: func(0.1))
+testexception(TypeError, lambda: func(1))
+testexception(TypeError, lambda: func([]))
+
+def func(key):
+	pytave.locals[key]
+testexception(TypeError, lambda: func(0.1))
+testexception(TypeError, lambda: func(1))
+testexception(TypeError, lambda: func([]))
 
 testlocalscope(5)
 
@@ -279,3 +304,13 @@ testlocalscope(5)
 
 testexpect(arr1o,arr1o[0].tolist())
 testexpect(arr1ch,arr1ch.tostring())
+
+# Emacs
+#	Local Variables:
+#	fill-column:70
+#	coding:utf-8
+#	indent-tabs-mode:t
+#	tab-width:8
+#	python-indent:8
+#	End:
+# vim: set textwidth=70 noexpandtab tabstop=8 :
