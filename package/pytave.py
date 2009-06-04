@@ -22,6 +22,7 @@
 
 import _pytave
 import sys
+import Numeric
 
 arg0 = sys.argv[0]
 interactive = sys.stdin.isatty() and (arg0 == '' or arg0 == '-')
@@ -30,7 +31,7 @@ _pytave.init(interactive)
 (OctaveError, ValueConvertError, ObjectConvertError, ParseError, \
  VarNameError) = _pytave.get_exceptions();
 
-def feval(nargout, funcname, *arguments):
+def feval(nargout, funcname, *arguments, **kwargs):
 
 	"""Executes an Octave function called funcname.
 
@@ -64,6 +65,8 @@ def feval(nargout, funcname, *arguments):
 		UINT, SINT,         -''-
 		LONG,               -''-
 		DOUBLE              -''-
+		CHAR 					  character array
+		OBJECT				  cell array
 
 	All other objects causes a pytave.ObjectConvertError to be
 	raised. This exception inherits TypeError.
@@ -74,19 +77,25 @@ def feval(nargout, funcname, *arguments):
 	Scalar values to objects:
 		bool                bool
 		real scalar         float (64-bit)
-		any string*         str
+		any string          str* (if native = True)
 		struct              dict
-		cell*               list
+		cell                list* (if native = True)
 
 		* Cell arrays must be one-dimensional (row vector) and
                   character matrices must only have one row.  Any
                   other form will raise a ValueConvertError.
+						This is required unless native = False.
 		
 	Matrix values to Numeric arrays:
+	   double				  DOUBLE
+		single				  FLOAT
+		logical				  DOUBLE
 		int64               LONG
 		int32, uint32       INT, UINT
 		int16, uint16       SHORT, USHORT
 		int8, unint8        SBYTE, UBYTE
+		char					  CHAR (if native = False)
+		cell					  OBJECT (if native = False)
 
 	All other values causes a pytave.ValueConvertError to be
 	raised. This exception inherits TypeError.
@@ -99,9 +108,10 @@ def feval(nargout, funcname, *arguments):
 
 	"""
 
-	return _pytave.feval(nargout, funcname, arguments)
+	return _pytave.feval(nargout, funcname, arguments,
+			  kwargs.get("native", True))
 
-def eval(nargout, code, silent=True):
+def eval(nargout, code, **kwargs):
 
 	"""Executes a given Octave code.
 
@@ -134,7 +144,8 @@ def eval(nargout, code, silent=True):
 
 	"""
 
-	return _pytave.eval(nargout, code, silent)
+	return _pytave.eval(nargout,code,kwargs.get("silent",True),
+		 kwargs.get("native",True))
 
 def addpath(*arguments):
 	"""See Octave documentation"""
@@ -148,7 +159,7 @@ def path(*paths):
 	"""See Octave documentation"""
 	return _pytave.feval(1, "path", paths)[0]
 
-def getvar(name, fglobal = False):
+def getvar(name, **kwargs):
 	 """Queries a variable by name from the current Octave scope.
 	 This is pretty much equivalent to calling eval(name), but is
 	 much faster because the Octave parser is bypassed. 
@@ -159,9 +170,10 @@ def getvar(name, fglobal = False):
 
 	 If the variable is not defined, VarNameError exception is raised.
 	 """
-	 return _pytave.getvar(name, fglobal)
+	 return _pytave.getvar(name,kwargs.get("fglobal",False), 
+		  kwargs.get("native", True))
 
-def setvar(name, val, fglobal = False):
+def setvar(name, val, **kwargs):
 	 """Sets a variable by name from the current Octave scope.
 	 It is quite fast because the Octave parser is bypassed. 
 
@@ -174,9 +186,9 @@ def setvar(name, val, fglobal = False):
 	 If the variable name is not valid, VarNameError exception is raised.
 	 """
 
-	 return _pytave.setvar(name, val, fglobal)
+	 return _pytave.setvar(name, val, kwargs.get("fglobal",False))
 
-def isvar(name, fglobal = False):
+def isvar(name, **kwargs):
 	 """Checks whether a variable exists in the current Octave scope.
 	 It is quite fast because the Octave parser is bypassed. 
 
@@ -187,7 +199,7 @@ def isvar(name, fglobal = False):
 	 If the variable is defined, returns True, otherwise returns False.
 	 """
 
-	 return _pytave.isvar(name, fglobal)
+	 return _pytave.isvar(name, kwargs.get("fglobal",False))
 
 def push_scope():
 	 """Creates a new anonymous local variable scope on the Octave call

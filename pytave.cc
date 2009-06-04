@@ -129,7 +129,8 @@ namespace pytave { /* {{{ */
      
    boost::python::tuple func_eval(const int nargout,
                                   const string &funcname,
-                                  const boost::python::tuple &arguments) {
+                                  const boost::python::tuple &arguments,
+                                  bool native) {
 
       octave_value_list octave_args, retval;
 
@@ -160,7 +161,7 @@ namespace pytave { /* {{{ */
 
       if (nargout >= 0) {
          boost::python::tuple pytuple;
-         octlist_to_pytuple(pytuple, retval);
+         octlist_to_pytuple(pytuple, retval, native);
          return pytuple;
       } else {
          // Return () if nargout < 0.
@@ -170,7 +171,8 @@ namespace pytave { /* {{{ */
 
    boost::python::tuple str_eval(int nargout,
                                  const string &code,
-                                 bool silent) {
+                                 bool silent,
+                                 bool native) {
 
       octave_value_list retval;
       int parse_status;
@@ -205,7 +207,7 @@ namespace pytave { /* {{{ */
 
       if (nargout >= 0) {
          boost::python::tuple pytuple;
-         octlist_to_pytuple(pytuple, retval);
+         octlist_to_pytuple(pytuple, retval, native);
          return pytuple;
       } else {
          // Return () if nargout < 0.
@@ -214,7 +216,7 @@ namespace pytave { /* {{{ */
    }
 
    boost::python::object getvar(const string& name,
-                                bool global) {
+                                bool global, bool native) {
       octave_value val;
 
       if (global)
@@ -227,7 +229,7 @@ namespace pytave { /* {{{ */
       }
 
       boost::python::object pyobject;
-      octvalue_to_pyobj(pyobject, val);
+      octvalue_to_pyobj(pyobject, val, native);
 
       return pyobject;
    }

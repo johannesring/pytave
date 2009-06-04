@@ -22,9 +22,9 @@
 
 namespace pytave {
    void octvalue_to_pyobj(boost::python::object &py_object,
-                          const octave_value& octvalue);
+                          const octave_value& octvalue, bool native = true);
    void octlist_to_pytuple(boost::python::tuple &python_tuple,
-                           const octave_value_list &octave_list);
+                           const octave_value_list &octave_list, bool native = true);
 }
 
 #endif /* OCTAVE_TO_PYTHON_H */
