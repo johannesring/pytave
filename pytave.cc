@@ -253,9 +253,9 @@ namespace pytave { /* {{{ */
       bool retval;
 
       if (global)
-         retval = symbol_table::is_global (name);
+         retval = symbol_table::global_varval (name).is_defined ();
       else
-         retval = symbol_table::is_local_variable (name);
+         retval = symbol_table::is_variable (name);
 
       return retval;
    }

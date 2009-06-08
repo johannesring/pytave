@@ -1,3 +1,7 @@
+2009-06-03  Jaroslav Hajek  <highegg@gmail.com>
+
+	* pytave.cc (isvar): Fix tests.
+
 2009-06-08  Jaroslav Hajek  <highegg@gmail.com>, David Grundberg  <individ@acc.umu.se>
 
 	* octave_to_python.cc (copy_octarray_to_pyarrobj<PyObject *,
