@@ -124,20 +124,20 @@ def testsetget(variables, name, value):
 	try:
 		variables[name] = value
 		if name not in variables:
-			print "FAIL: set/get: ", name,": Should exist, not there."
+			fail("set/get: %s: Should exist, not there." % name)
 		result, = pytave.feval(1, "isequal", value, variables[name])
 		if not result:
-			print "FAIL: set/get: ", name," -> ",value," results diverged"
+			fail("set/get: %s -> %s: results diverged" % (name, value))
 	except Exception, e:
-		print "FAIL: set/get: ", name, ":", e
+		fail("set/get: %s" % name, e)
 
 def testexception(exception, func):
 	try:
 		func()
-		print "FAIL: ", name
+		fail("Expecting %s but nothing was raised." % repr(exception))
 	except Exception, e:
 		if not isinstance(e, exception):
-			print "FAIL:", name, ":", e
+			fail("Expecting %s but got %s instead" % (repr(exception), repr(e)), e)
 
 def testlocalscope(x):
 
@@ -162,7 +162,6 @@ def testlocalscope(x):
 	    fail('testlocalscope: result incorrect')
     except Exception, e:
 	fail("testlocalscope: %s" % (x,), e)
-
 
 testmatrix(alimit_int32)
 testmatrix(alimit_int16)
@@ -252,7 +251,7 @@ if result.shape != (3, 1):
 testparseerror(1, "endfunction")
 testevalexpect(1, "2 + 2", (4,))
 testevalexpect(1, "{2}", ([2],))
-testevalexpect(2, "struct('foo', 2)", ({'foo': 2},))
+testevalexpect(1, "struct('foo', 2)", ({'foo': 2},))
 
 testsetget(pytave.locals, "xxx", [1,2,3])
 testsetget(pytave.globals, "xxx", [1,2,3])
@@ -278,6 +277,30 @@ testexception(TypeError, lambda: func(1))
 testexception(TypeError, lambda: func([]))
 
 testlocalscope(5)
+
+testexception(KeyError, lambda: pytave.locals["localvariable"])
+pytave.locals["localvariable"] = 1
+if "localvariable" in pytave.globals:
+	fail("Local variable in globals")
+del pytave.locals["localvariable"]
+if "localvariable" in pytave.locals:
+	fail("Could not clear local variable")
+testexception(KeyError, lambda: pytave.locals["localvariable"])
+def func():
+	del pytave.locals["localvariable"]
+testexception(KeyError, lambda: func())
+
+testexception(KeyError, lambda: pytave.globals["globalvariable"])
+pytave.globals["globalvariable"] = 1
+if "globalvariable" in pytave.locals:
+	fail("Global variable in locals")
+del pytave.globals["globalvariable"]
+if "globalvariable" in pytave.globals:
+	fail("Could not clear global variable")
+testexception(KeyError, lambda: pytave.globals["globalvariable"])
+def func():
+	del pytave.globals["globalvariable"]
+testexception(KeyError, lambda: func())
 
 # Emacs
 #	Local Variables:
