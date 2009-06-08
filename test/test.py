@@ -302,7 +302,6 @@ def func():
 	del pytave.globals["globalvariable"]
 testexception(KeyError, lambda: func())
 
-
 # Emacs
 #	Local Variables:
 #	fill-column:70
