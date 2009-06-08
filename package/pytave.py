@@ -21,7 +21,9 @@
 """Python to Octave bridge"""
 
 import _pytave
+import UserDict
 import sys
+import Numeric
 
 arg0 = sys.argv[0]
 interactive = sys.stdin.isatty() and (arg0 == '' or arg0 == '-')
@@ -54,9 +56,9 @@ def feval(nargout, funcname, *arguments):
 	Objects:
 		int (32-bit)        int32
 		float (64-bit)      double
-		str                 string
+		str                 character array
 		dict                struct
-		list                cell
+		list                cell array
 		
 	Numeric Array:
 		UBYTE, SBYTE,       matrix of correct type
@@ -64,9 +66,17 @@ def feval(nargout, funcname, *arguments):
 		UINT, SINT,         -''-
 		LONG,               -''-
 		DOUBLE              -''-
+		CHAR                character array
+		OBJECT              cell array
 
 	All other objects causes a pytave.ObjectConvertError to be
 	raised. This exception inherits TypeError.
+
+	When dicts are converted, all keys must be strings and
+	constitute valid Octave identifiers. By default, scalar
+	structures are created. However, when all values evaluate
+	to cell arrays with matching dimensions, an Octave struct
+	array is created.
 	
 	Octave to Python
 	================
@@ -74,19 +84,18 @@ def feval(nargout, funcname, *arguments):
 	Scalar values to objects:
 		bool                bool
 		real scalar         float (64-bit)
-		any string*         str
 		struct              dict
-		cell*               list
 
-		* Cell arrays must be one-dimensional (row vector) and
-                  character matrices must only have one row.  Any
-                  other form will raise a ValueConvertError.
-		
 	Matrix values to Numeric arrays:
+	   	double              DOUBLE
+		single              FLOAT
+		logical             DOUBLE
 		int64               LONG
 		int32, uint32       INT, UINT
 		int16, uint16       SHORT, USHORT
 		int8, unint8        SBYTE, UBYTE
+		char                CHAR (if native = False)
+		cell                OBJECT (if native = False)
 
 	All other values causes a pytave.ValueConvertError to be
 	raised. This exception inherits TypeError.
@@ -210,7 +219,7 @@ def pop_scope():
 	 """
 	 _pytave.pop_scope()
  
-class _local_scope:
+class _LocalScope:
 	 def __init__(self, func):
 		  self.func = func
 		  self.__name__ = func.__name__
@@ -240,7 +249,7 @@ def local_scope(func):
 		  finally:
 			  pytave.pop_scope()
 	 """
-	 return _local_scope(func)
+	 return _LocalScope(func)
 
 # Emacs
 #	Local Variables:
@@ -248,5 +257,6 @@ def local_scope(func):
 #	coding:utf-8
 #	indent-tabs-mode:t
 #	tab-width:8
+#	python-indent:8
 #	End:
-# vim: set textwidth=70 noexpandtab tabstop=3 :
+# vim: set textwidth=70 noexpandtab tabstop=8 :

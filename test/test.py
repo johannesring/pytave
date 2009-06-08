@@ -3,6 +3,7 @@
 
 import pytave
 import Numeric
+import traceback
 
 print "No messages indicates test pass."
 
@@ -11,72 +12,76 @@ arr0_1 = Numeric.zeros((0,1));
 arr1_0 = Numeric.zeros((1,0));
 number = Numeric.array([1.32], Numeric.Float32)
 arr1fT = Numeric.array([[1.32], [2], [3], [4]], Numeric.Float32)
-arr1fT2 = Numeric.array([[1.32, 2, 3, 4]], Numeric.Float32)
-arr1f = Numeric.array([[1.32, 2, 3, 4]], Numeric.Float32)
-arr1b = Numeric.array([[8, 2, 3, 256]], Numeric.Int8)
-arr1i = Numeric.array([[17, 2, 3, 4]], Numeric.Int)
-arr1i32 = Numeric.array([[32, 2, 3, 4]], Numeric.Int32)
-arr1a = Numeric.array([[1, 2, 3, 4]])
+arr1fT2 = Numeric.array([1.32, 2, 3, 4], Numeric.Float32)
+arr1f = Numeric.array([1.32, 2, 3, 4], Numeric.Float32)
+arr1b = Numeric.array([8, 2, 3, 256], Numeric.Int8)
+arr1i = Numeric.array([17, 2, 3, 4], Numeric.Int)
+arr1i32 = Numeric.array([32, 2, 3, 4], Numeric.Int32)
+arr1a = Numeric.array([1, 2, 3, 4])
 arr2f = Numeric.array([[1.32, 2, 3, 4],[5,6,7,8]], Numeric.Float32)
 arr2d = Numeric.array([[1.17, 2, 3, 4],[5,6,7,8]], Numeric.Float)
 arr3f = Numeric.array([[[1.32, 2, 3, 4],[5,6,7,8]],[[9, 10, 11, 12],[13,14,15,16]]], Numeric.Float32)
-arr1c = Numeric.array([[1+2j, 3+4j, 5+6j, 7+0.5j]], Numeric.Complex)
-arr1fc = Numeric.array([[1+2j, 3+4j, 5+6j, 7+0.5j]], Numeric.Complex32)
-arr1o = Numeric.array([["abc",1.0,2+3j]],Numeric.PyObject)
-arr2o = Numeric.array([["abc",1.0,2+3j],[4.0,arr1i,"def"]],Numeric.PyObject)
-arr1ch = Numeric.array(["abc"],Numeric.Character)
+arr1c = Numeric.array([1+2j, 3+4j, 5+6j, 7+0.5j], Numeric.Complex)
+arr1fc = Numeric.array([1+2j, 3+4j, 5+6j, 7+0.5j], Numeric.Complex32)
+arr1ch = Numeric.array("abc",Numeric.Character)
 arr2ch = Numeric.array(["abc","def"],Numeric.Character)
+arr1o = Numeric.array([1.0,"abc",2+3j],Numeric.PyObject)
+arr2o = Numeric.array([[1.0,"abc",2+3j],[4.0,arr1i,"def"]],Numeric.PyObject)
 
-alimit_int32 = Numeric.array([[-2147483648, 2147483647]], Numeric.Int32);
-alimit_int16 = Numeric.array([[-32768, 32767, -32769, 32768]], Numeric.Int16);
-alimit_int8 = Numeric.array([[-128, 127, -129, 128]], Numeric.Int8);
-alimit_uint8 = Numeric.array([[0, 255, -1, 256]], Numeric.UnsignedInt8);
+alimit_int32 = Numeric.array([-2147483648, 2147483647], Numeric.Int32);
+alimit_int16 = Numeric.array([-32768, 32767, -32769, 32768], Numeric.Int16);
+alimit_int8 = Numeric.array([-128, 127, -129, 128], Numeric.Int8);
+alimit_uint8 = Numeric.array([0, 255, -1, 256], Numeric.UnsignedInt8);
 
 
 # This eval call is not to be seen as a encouragement to use Pytave
 # like this. Create a separate .m-file with your complex Octave code.
-pytave.feval(0, "eval", "function [result] = test_return(arg) "
-"result = arg; endfunction")
+pytave.eval(0, "function [result] = test_return(arg); result = arg; endfunction")
 
 pytave.feval(1, "test_return", 1)
+
+def fail(msg, exc=None):
+	print "FAIL:", msg
+	traceback.print_stack()
+	if exc is not None:
+		traceback.print_exc(exc)
+	print ""
 
 def testequal(value):
 	try:
 		nvalue, = pytave.feval(1, "test_return", value)
 		if nvalue != value:
-			print "FAIL as ", value, " != ", nvalue
+			fail("as %s != %s" % (value, nvalue))
 	except TypeError, e:
-		print "FAIL: ", value,":", e
+		fail(value, e)
 
 def testexpect(value, expected):
 	try:
 		nvalue, = pytave.feval(1, "test_return", value)
 		if nvalue != expected:
-			print "FAIL as ", nvalue, " != ", expected, ","
-			print "        sent in", value
+			fail("sent in %s, expecting %s, got %s", (value, expected, nvalue))
 	except TypeError, e:
-		print "FAIL: ", value,":", e
-
+		fail(value, e)
 
 def testmatrix(value):
 	try:
 		nvalue, = pytave.feval(1, "test_return", value)
-#		print "test", (value,)
-#		print "returned ", (nvalue,)
 		class1 = pytave.feval(1, "class", value)
 		class2 = pytave.feval(1, "class", nvalue)
 		if nvalue != value:
-			print "FAIL as ", value, " != ", nvalue
+			fail("as %s != %s" % (value, nvalue))
 		if value.shape != nvalue.shape:
-			print "Size check failed for: ", (value,) ,". Got ",value.shape, "and later", nvalue.shape, " =++ ", (nvalue,)
+			fail("Size check failed for: %s. Expected shape %s, got %s  with shape %s" \
+			%(value, value.shape, nvalue, nvalue.shape))
 		if class1 != class2:
-			print "Type check failed for: ", (value,) ,". Got ",class1, "and later", class2
+			fail( "Type check failed for: %s. Expected %s. Got %s."
+			%(value, class1, class2))
 	except TypeError, e:
-		print "Execute failed: ", value,":", e
+		fail("Execute failed: %s" % value, e)
 
 def testobjecterror(value):
 	try:
-		print pytave.feval(1, "test_return", value);
+		pytave.feval(1, "test_return", value);
 		print "FAIL:", (value,)
 	except pytave.ObjectConvertError:
 		pass
@@ -85,16 +90,16 @@ def testobjecterror(value):
 
 def testvalueerror(*value):
 	try:
-		print pytave.feval(1, *value);
-		print "FAIL:", (value,)
+		pytave.feval(1, *value);
+		fail(value)
 	except pytave.ValueConvertError:
 		pass
 	except Exception, e:
-		print "FAIL", (value,), e
+		fail(value, e)
 
 def testparseerror(*value):
 	try:
-		print pytave.eval(*value);
+		pytave.eval(*value);
 		print "FAIL:", (value,)
 	except pytave.ParseError:
 		pass
@@ -111,11 +116,9 @@ def testevalexpect(numargout, code, expectations):
 	try:
 		results = pytave.eval(numargout, code);
 		if results != expectations:
-			print "FAIL: eval: ", code, " because", results, " != ", expectations, ","
+			fail("eval: %s : because %s != %s" % (code, results, expectations))
 	except Exception, e:
-		print "FAIL: eval:", code, ":", e
-def testcellinvariant(value):
-	pass
+		fail("eval: %s" % code, e)
 
 def testsetget(name,value):
     try:
@@ -134,6 +137,9 @@ def testvarnameerror(name):
 	pass
     except Exception, e:
 	print "FAIL: ", name
+			fail("eval: %s : because %s != %s" % (code, results, expectations))
+	except Exception, e:
+		fail("eval: %s" % code, e)
 
 def testlocalscope(x):
 
@@ -145,7 +151,7 @@ def testlocalscope(x):
 	    fxm1 = sloppy_factorial(xm1)
 	else:
 	    fxm1 = 1
-	pytave.setvar("fxm1",fxm1)
+	pytave.locals["fxm1"] = fxm1
 	fx, = pytave.eval(1,"x * fxm1")
 	return fx
 
@@ -155,12 +161,9 @@ def testlocalscope(x):
 	for k in range(1,x+1):
 	    fx1 = k * fx1
 	if fx != fx1:
-	    print 'FAIL: testlocalscope: result incorrect'
+	    fail('testlocalscope: result incorrect')
     except Exception, e:
-	print "FAIL: testlocalscope:", (x,), e
-
-
-testequal('a')
+	fail("testlocalscope: %s" % (x,), e)
 
 
 testmatrix(alimit_int32)
@@ -169,11 +172,8 @@ testmatrix(alimit_int8)
 
 # Strings
 # Multi-row character matrix cannot be returned
-testvalueerror("eval", "['foo'; 'bar']")
-testequal('a')
 
 testequal("mystring")
-testequal('mystring')
 testequal("mystringåäöÅÄÖ")
 
 testequal(1)
@@ -188,12 +188,12 @@ testmatrix(arr1fT)
 testmatrix(arr1fT2)
 testmatrix(arr1i)
 testmatrix(arr1b)
-testmatrix(arr1c)
 testmatrix(arr1fc)
 
 # 2d arrays
 testmatrix(arr2f)
 testmatrix(arr2d)
+testmatrix(arr2ch)
 
 # 3d arrays
 testmatrix(arr3f)
@@ -203,7 +203,6 @@ if (arr0_0 != arr0_0) or (arr0_0 == arr0_0):
 	print "FAIL: Zero test", 
 
 testmatrix(arr0_0)
-testmatrix(arr1_0)
 testmatrix(arr0_1)
 
 # Lists
@@ -216,38 +215,24 @@ testequal([])
 testvalueok("cell", 1, 3);
 testvalueok("cell", 1, 0)
 testvalueok("cell", 0, 0)
-
-# Return cells with incompatible dimensions
-testvalueerror("cell", 3, 1)
-testvalueerror("cell", 0, 1)
+testvalueok("cell", 3, 1)
+testvalueok("cell", 0, 1)
 
 # Dictionaries
 
 # Simple dictionary tests
-testequal({"foo": [1], "bar": [2]})
+testequal({"foo": 1, "bar": 2})
 testequal({"x": [1, 3], "y": [2, 4]})
 testequal({"x": [1, "baz"], "y": [2, "foobar"]})
 testequal({"x": [arr1f], "y": [arr1i]})
 testequal({})
+testequal({"foo": arr1f,    "bar": arr2f})
+testequal({"foo": 1,        "bar": [2]})
+testexpect({"foo": [[1,2]],        "bar": [[3,2]]},
+	   {"foo": [1,2],        "bar": [3,2]})
 
 # Try some odd dictionaries
 # The implicit conversion makes Pytave return cell-wrapped results.
-testexpect({"foo": number,   "bar": 2},
-	   {"foo": [number], "bar": [2]})
-testexpect({"foo": arr1f,    "bar": arr2f},
-	   {"foo": [arr1f],  "bar": [arr2f]})
-testexpect({"foo": 1,        "bar": 2},
-	   {"foo": [1],      "bar": [2]})
-testexpect({"foo": 1,        "bar": [2]},
-	   {"foo": [1],      "bar": [2]})
-testexpect({"foo": 1,        "bar": [2, 3]},
-	   {"foo": [1, 1],   "bar": [2, 3]})
-testexpect({"foo": [1],      "bar": [2, 4]},
-	   {"foo": [1, 1],   "bar": [2, 4]})
-testexpect({"bar": 1,        "foo": [2, 3]},
-	   {"bar": [1, 1],   "foo": [2, 3]})
-testexpect({"bar": [1],      "foo": [2, 4]},
-	   {"bar": [1, 1],   "foo": [2, 4]})
 
 # Try some invalid keys
 testobjecterror({"this is not an Octave identifier": 1})
@@ -259,8 +244,8 @@ testobjecterror((1, ))
 testobjecterror(())
 
 result, = pytave.feval(1, "eval", "[1, 1, 1]")
-if result.shape != (1, 3):
-	print "FAIL: expected 1x3 matrix"
+if result.shape != (3,):
+	print "FAIL: expected length-3 vector"
 
 result, = pytave.feval(1, "eval", "[1; 2; 3]");
 if result.shape != (3, 1):
@@ -269,13 +254,16 @@ if result.shape != (3, 1):
 testparseerror(1, "endfunction")
 testevalexpect(1, "2 + 2", (4,))
 testevalexpect(1, "{2}", ([2],))
-testevalexpect(2, "struct('foo', 2)", ({'foo': [2]},))
-
-testsetget("xxx", [1,2,3])
+testevalexpect(2, "struct('foo', 2)", ({'foo': 2},))
 
 testlocalscope(5)
 
-# Try converting Numeric arrays of objects and characters
-
-testexpect(arr1o,arr1o[0].tolist())
-testexpect(arr1ch,arr1ch.tostring())
+# Emacs
+#	Local Variables:
+#	fill-column:70
+#	coding:utf-8
+#	indent-tabs-mode:t
+#	tab-width:8
+#	python-indent:8
+#	End:
+# vim: set textwidth=70 noexpandtab tabstop=8 :

@@ -310,11 +310,14 @@ namespace pytave {
 
       dim_vector dims = dim_vector(1, 1);
 
-      bool has_dimensions = false;
+      bool dims_match = true;
 
       Array<octave_value> vals (length);
       Array<std::string> keys (length);
 
+      // Extract all keys and convert values. Remember whether dimensions
+      // match.
+      
       for(octave_idx_type i = 0; i < length; i++) {
 
          std::string& key = keys(i);
@@ -343,23 +346,15 @@ namespace pytave {
 
          pyobj_to_octvalue(val, tuple[1]);
 
-         if(val.is_cell()) {
-            const Cell c(val.cell_value());
-            if (error_state)
-               throw object_convert_exception("Octave error");
-
-            // We do not bother measuring 1x1 values, since they are replicated
-            // to fill up the necessary dimensions.
-            if(!(c.dims().length() == 2 && c.dims()(0) == 1 && c.dims()(1) == 1)) {
-
-               if(!has_dimensions) {
-                  dims = c.dims();
-                  has_dimensions = true;
-               } else if(c.dims() != dims) {
-                  throw object_convert_exception(
-                     "Dimensions of the struct fields do not match");
-               }
+         if(dims_match && val.is_cell()) {
+            dim_vector dv = val.dims();
+            if(i == 0) {
+               dims = dv;
+            } else {
+               dims_match = dims == dv;
             }
+         } else {
+            dims_match = false;
          }
       }
 
@@ -370,23 +365,10 @@ namespace pytave {
          std::string& key = keys(i);
          octave_value val = vals(i);
 
-         if(!val.is_cell()) {
-            map.assign(key, Cell(dims, val));
+         if(dims_match) {
+            map.assign(key, val.cell_value ());
          } else {
-            const Cell c(val.cell_value());
-
-            if (error_state)
-               throw object_convert_exception("Octave error");
-
-            if(c.dims().length() == 2 && c.dims()(0) == 1 && c.dims()(1) == 1) {
-               map.assign(key, Cell(dims, c(0)));
-            }
-            else {
-               map.assign(key, c);
-            }
-         }
-         if (error_state) {
-            throw object_convert_exception("Octave error");
+            map.assign(key, val);
          }
       }
       oct_value = map;
