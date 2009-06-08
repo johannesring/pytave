@@ -1,5 +1,33 @@
 2009-06-03  Jaroslav Hajek  <highegg@gmail.com>
 
+	* pytave.cc (delvar): New function.
+	* package/pytave.py (_VariablesDict.__delitem__): New method.
+
+2009-06-03  Jaroslav Hajek  <highegg@gmail.com>
+
+	* pytave.cc (isvar): Fix tests.
+
+2009-06-08  Jaroslav Hajek  <highegg@gmail.com>, David Grundberg  <individ@acc.umu.se>
+
+	* octave_to_python.cc (copy_octarray_to_pyarrobj<PyObject *,
+	Cell>): New template specialization.
+	(createPyArr): Simplify row vectors to 1D arrays.
+	(octvalue_to_pyarrobj): Add string and cell cases.
+	(octcell_to_pyobject): Create a PyObject array if not row vector.
+	(octmap_to_pyobject): Create a simple dict if scalar struct.
+	(octvalue_to_pyobj): Allow converting arbitrary character matrices.
+	* python_to_octave.cc (pydict_to_octmap): Make scalar structs by
+	default, detect matching dimensions.
+	* package/pytave.py (feval): Update doc string.
+	(getvar, setvar, isvar): Remove.
+	(_VariablesDict): New class.
+	(locals, globals): Default instances.
+	(_local_scope): Rename to _LocalScope
+	* test/test.py: New tests. Update old tests.
+	(testsetget, testexception): New functions.
+
+2009-06-03  Jaroslav Hajek  <highegg@gmail.com>
+
 	* python_to_octave.cc (copy_pyarrobj_to_octarray<PyObject *,
 	Cell>): New template specialization.
 	(matching_type<PyObject *, octave_value>): Ditto.

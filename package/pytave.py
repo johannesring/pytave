@@ -56,9 +56,9 @@ def feval(nargout, funcname, *arguments, **kwargs):
 	Objects:
 		int (32-bit)        int32
 		float (64-bit)      double
-		str                 string
+		str                 character array
 		dict                struct
-		list                cell
+		list                cell array
 		
 	Numeric Array:
 		UBYTE, SBYTE,       matrix of correct type
@@ -66,11 +66,17 @@ def feval(nargout, funcname, *arguments, **kwargs):
 		UINT, SINT,         -''-
 		LONG,               -''-
 		DOUBLE              -''-
-		CHAR 					  character array
-		OBJECT				  cell array
+		CHAR                character array
+		OBJECT              cell array
 
 	All other objects causes a pytave.ObjectConvertError to be
 	raised. This exception inherits TypeError.
+
+	When dicts are converted, all keys must be strings and
+	constitute valid Octave identifiers. By default, scalar
+	structures are created. However, when all values evaluate
+	to cell arrays with matching dimensions, an Octave struct
+	array is created.
 	
 	Octave to Python
 	================
@@ -78,25 +84,18 @@ def feval(nargout, funcname, *arguments, **kwargs):
 	Scalar values to objects:
 		bool                bool
 		real scalar         float (64-bit)
-		any string          str* (if native = True)
 		struct              dict
-		cell                list* (if native = True)
 
-		* Cell arrays must be one-dimensional (row vector) and
-                  character matrices must only have one row.  Any
-                  other form will raise a ValueConvertError.
-						This is required unless native = False.
-		
 	Matrix values to Numeric arrays:
-	   double				  DOUBLE
-		single				  FLOAT
-		logical				  DOUBLE
+	   	double              DOUBLE
+		single              FLOAT
+		logical             DOUBLE
 		int64               LONG
 		int32, uint32       INT, UINT
 		int16, uint16       SHORT, USHORT
 		int8, unint8        SBYTE, UBYTE
-		char					  CHAR (if native = False)
-		cell					  OBJECT (if native = False)
+		char                CHAR (if native = False)
+		cell                OBJECT (if native = False)
 
 	All other values causes a pytave.ValueConvertError to be
 	raised. This exception inherits TypeError.
@@ -109,8 +108,7 @@ def feval(nargout, funcname, *arguments, **kwargs):
 
 	"""
 
-	return _pytave.feval(nargout, funcname, arguments,
-			  kwargs.get("native", True))
+	return _pytave.feval(nargout, funcname, arguments)
 
 def eval(nargout, code, **kwargs):
 
@@ -145,8 +143,7 @@ def eval(nargout, code, **kwargs):
 
 	"""
 
-	return _pytave.eval(nargout,code,kwargs.get("silent",True),
-		 kwargs.get("native",True))
+	return _pytave.eval(nargout,code,kwargs.get("silent",True))
 
 def addpath(*arguments):
 	"""See Octave documentation"""
@@ -160,13 +157,8 @@ def path(*paths):
 	"""See Octave documentation"""
 	return _pytave.feval(1, "path", paths)[0]
 
-#xxx
-_pytave.setvar("foo", "value", True)
-print _pytave.isvar("foo", True)
-print _pytave.getvar("foo", True, True)
-#xxx
 class _VariablesDict(UserDict.DictMixin):
-	def __init__(self, global_variables, native):
+	def __init__(self, global_variables, native=False):
 		self.global_variables = global_variables
 		self.native = native
 
@@ -174,7 +166,7 @@ class _VariablesDict(UserDict.DictMixin):
 		if not isinstance(name, basestring):
 			raise TypeError('Expected a string, not a ' + repr(type(name)))
 		try:
-			return _pytave.getvar(name, self.global_variables, self.native)
+			return _pytave.getvar(name, self.global_variables)
 		except VarNameError:
 			raise KeyError('No Octave variable named ' + name)
 
@@ -191,16 +183,17 @@ class _VariablesDict(UserDict.DictMixin):
 	def __delitem__(self, name):
 		if not isinstance(name, basestring):
 			raise TypeError('Expected a string, not a ' + repr(type(name)))
-		try:
-			_pytave.clearvar(name, self.global_variables)
-		except VarNameError:
+		# Octave does not gripe when clearing non-existent
+		# variables. To be consistent with Python dict
+		# behavior, we shall do so.
+		if self.__contains__(name):
+			_pytave.delvar(name, self.global_variables)
+		else:
 			raise KeyError('No Octave variable named ' + name)
 
 
-locals = _VariablesDict(global_variables=False, native=False)
-globals = _VariablesDict(global_variables=True, native=False)
-native_locals = _VariablesDict(global_variables=False, native=True)
-native_globals = _VariablesDict(global_variables=True, native=True)
+locals = _VariablesDict(global_variables=False)
+globals = _VariablesDict(global_variables=True)
 
 def push_scope():
 	 """Creates a new anonymous local variable scope on the Octave call

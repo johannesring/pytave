@@ -129,8 +129,7 @@ namespace pytave { /* {{{ */
      
    boost::python::tuple func_eval(const int nargout,
                                   const string &funcname,
-                                  const boost::python::tuple &arguments,
-                                  bool native) {
+                                  const boost::python::tuple &arguments) {
 
       octave_value_list octave_args, retval;
 
@@ -161,7 +160,7 @@ namespace pytave { /* {{{ */
 
       if (nargout >= 0) {
          boost::python::tuple pytuple;
-         octlist_to_pytuple(pytuple, retval, native);
+         octlist_to_pytuple(pytuple, retval);
          return pytuple;
       } else {
          // Return () if nargout < 0.
@@ -171,8 +170,7 @@ namespace pytave { /* {{{ */
 
    boost::python::tuple str_eval(int nargout,
                                  const string &code,
-                                 bool silent,
-                                 bool native) {
+                                 bool silent) {
 
       octave_value_list retval;
       int parse_status;
@@ -207,7 +205,7 @@ namespace pytave { /* {{{ */
 
       if (nargout >= 0) {
          boost::python::tuple pytuple;
-         octlist_to_pytuple(pytuple, retval, native);
+         octlist_to_pytuple(pytuple, retval);
          return pytuple;
       } else {
          // Return () if nargout < 0.
@@ -216,7 +214,7 @@ namespace pytave { /* {{{ */
    }
 
    boost::python::object getvar(const string& name,
-                                bool global, bool native) {
+                                bool global) {
       octave_value val;
 
       if (global)
@@ -229,7 +227,7 @@ namespace pytave { /* {{{ */
       }
 
       boost::python::object pyobject;
-      octvalue_to_pyobj(pyobject, val, native);
+      octvalue_to_pyobj(pyobject, val);
 
       return pyobject;
    }
@@ -265,19 +263,25 @@ namespace pytave { /* {{{ */
    bool clearvar(const string& name, bool global) {
       bool retval;
 
-      if (! isvar (name, global))
-         {
-            throw variable_name_exception (name + " not defined in " + ((global) ? "global" : "local") + " table");
-         }
-
-//       if (global)
-//          symbol_table::clear_global (name);
-//       else
-//          symbol_table::clear_variable (name);
-      symbol_table::clear_global (name);
-      symbol_table::clear_variable (name);
+      if (global)
+         retval = symbol_table::global_varval (name).is_defined ();
+      else
+         retval = symbol_table::is_variable (name);
 
       return retval;
+   }
+
+   void delvar(const string& name, bool global) {
+
+      if (global) {
+
+         // FIXME: workaround a bug in Octave 3.2.0.
+         if (! symbol_table::is_global (name))
+            symbol_table::insert (name).mark_global ();
+
+         symbol_table::clear_global (name);
+      } else
+         symbol_table::clear_variable (name);
    }
 
    int push_scope() {
@@ -307,7 +311,7 @@ BOOST_PYTHON_MODULE(_pytave) { /* {{{ */
    def("getvar", pytave::getvar);
    def("setvar", pytave::setvar);
    def("isvar", pytave::isvar);
-   def("clearvar", pytave::clearvar);
+   def("delvar", pytave::delvar);
    def("push_scope", pytave::push_scope);
    def("pop_scope", pytave::pop_scope);
    def("get_exceptions", pytave::get_exceptions);

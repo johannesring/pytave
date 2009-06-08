@@ -53,8 +53,7 @@ namespace pytave {
                                   const unsigned int matindex,
                                   const unsigned int matstride,
                                   const int dimension,
-                                  const unsigned int offset,
-                                  bool = true) {
+                                  const unsigned int offset) {
       unsigned char *ptr = (unsigned char*) pyarr->data;
       if (dimension == pyarr->nd - 1) {
          // Last dimension, base case
@@ -82,14 +81,13 @@ namespace pytave {
                                   const unsigned int matindex,
                                   const unsigned int matstride,
                                   const int dimension,
-                                  const unsigned int offset,
-                                  bool native) {
+                                  const unsigned int offset) {
       unsigned char *ptr = (unsigned char*) pyarr->data;
       if (dimension == pyarr->nd - 1) {
          // Last dimension, base case
          for (int i = 0; i < pyarr->dimensions[dimension]; i++) {
             object pyobj;
-            octvalue_to_pyobj (pyobj, matrix.elem(matindex + i*matstride), native);
+            octvalue_to_pyobj (pyobj, matrix.elem(matindex + i*matstride));
             Py_INCREF (pyobj.ptr());
             *(PyObject **)&ptr[offset + i*pyarr->strides[dimension]]
                = pyobj.ptr();
@@ -102,30 +100,35 @@ namespace pytave {
                matindex + i*matstride,
                matstride * pyarr->dimensions[dimension],
                dimension + 1,
-               offset + i*pyarr->strides[dimension],
-               native);
+               offset + i*pyarr->strides[dimension]);
          }
       }
    }
 
    static PyArrayObject *createPyArr(const dim_vector &dims,
                                      int pyarrtype) {
-      int dimensions[dims.length()];
+      int len = dims.length();
+      int dimensions[len];
       for (int i = 0; i < dims.length(); i++) {
          dimensions[i] = dims(i);
       }
+      // Simplify row vectors to 1d arrays.
+      if (len == 2 && dimensions[0] == 1) {
+         dimensions[0] = dimensions[1];
+         len = 1;
+      }
 
       return (PyArrayObject *)PyArray_FromDims(
-         dims.length(), dimensions, pyarrtype);
+         len, dimensions, pyarrtype);
    }
 
    template <class PythonPrimitive, class OctaveBase>
    static PyArrayObject *create_array(const OctaveBase &octarr,
-                                      int pyarraytype, bool native = true) {
+                                      int pyarraytype) {
       PyArrayObject *pyarr = createPyArr(octarr.dims(), pyarraytype);
       try {
          copy_octarray_to_pyarrobj
-            <PythonPrimitive, OctaveBase>(pyarr, octarr, 0, 1, 0, 0, native);
+            <PythonPrimitive, OctaveBase>(pyarr, octarr, 0, 1, 0, 0);
       } catch (value_convert_exception &pe) {
          Py_DECREF(pyarr);
          throw;
@@ -244,13 +247,13 @@ namespace pytave {
          return create_sint_array<int8NDArray, sizeof(int8_t)>(
             matrix.int8_array_value());
       }
-      if (!native && matrix.is_string()) {
+      if (matrix.is_string()) {
          return create_array<char, charNDArray>(
-            matrix.char_array_value(), PyArray_CHAR, native);
+            matrix.char_array_value(), PyArray_CHAR);
       }
-      if (!native && matrix.is_cell()) {
+      if (matrix.is_cell()) {
          return create_array<PyObject *, Cell>(
-            matrix.cell_value(), PyArray_OBJECT, native);
+            matrix.cell_value(), PyArray_OBJECT);
       }
 
       throw value_convert_exception("Octave matrix type not known, "
@@ -269,24 +272,20 @@ namespace pytave {
    }
 
    static void octcell_to_pyobject(boost::python::object &py_object,
-                                   const Cell& cell, bool native) {
-      if (native) {
+                                   const Cell& cell) {
+      if (is_1xn_or_0x0 (cell.dims ())) {
          py_object = boost::python::list();
-
-         if(!is_1xn_or_0x0(cell.dims())) {
-            throw value_convert_exception(
-               "Only one-dimensional (row mayor) cell arrays can be converted.");
-         }
 
          for(octave_idx_type i = 0 ; i < cell.length(); i++) {
             boost::python::object py_val;
 
-            octvalue_to_pyobj(py_val, cell.elem(i), native);
+            octvalue_to_pyobj(py_val, cell.elem(i));
 
             ((boost::python::list&)py_object).insert(i, py_val);
          }
-      } else
-         octvalue_to_pyarr(py_object, cell, native);
+      } else {
+         octvalue_to_pyarr (py_object, octave_value (cell));
+      }
    }
 
    static void octmap_to_pyobject(boost::python::object &py_object,
@@ -294,11 +293,18 @@ namespace pytave {
                                   bool native = true) {
       py_object = boost::python::dict();
       string_vector keys = map.keys();
+      bool scalar = map.dims().all_ones();
 
       for(octave_idx_type i = 0 ; i < keys.length(); i++) {
          boost::python::object py_val;
 
-         octcell_to_pyobject(py_val, map.contents(keys[i]), native);
+         const Cell c = map.contents(keys[i]);
+
+         if (scalar) {
+            octvalue_to_pyobj(py_val, c(0));
+         } else {
+            octcell_to_pyobject(py_val, c);
+         }
 
          py_object[keys[i]] = py_val;
       }
@@ -322,19 +328,18 @@ namespace pytave {
          else
             throw value_convert_exception(
                "Conversion for this scalar not implemented");
-      } else if (native && octvalue.is_string()) {
-         if (! is_1xn_or_0x0 (octvalue.dims ()))
-            throw value_convert_exception(
-               "Multi-row character matrices can not be converted.");
-         py_object = str(octvalue.string_value());
-      } else if (!native && octvalue.is_string()) {
-         octvalue_to_pyarr(py_object, octvalue, native);
+      } else if (octvalue.is_string()) {
+         if (is_1xn_or_0x0 (octvalue.dims ())) {
+            py_object = object(octvalue.string_value());
+         } else {
+            octvalue_to_pyarr(py_object, octvalue);
+         }
       } else if (octvalue.is_matrix_type()) {
          octvalue_to_pyarr(py_object, octvalue);
       } else if (octvalue.is_map()) {
          octmap_to_pyobject(py_object, octvalue.map_value(), native);
       } else if (octvalue.is_cell()) {
-         octcell_to_pyobject(py_object, octvalue.cell_value(), native); 
+         octcell_to_pyobject(py_object, octvalue.cell_value());
       } else
          throw value_convert_exception(
             "Conversion from Octave value not implemented");
