@@ -252,12 +252,30 @@ namespace pytave { /* {{{ */
    }
 
    bool isvar(const string& name, bool global) {
-      bool retval;
+      octave_value val;
 
       if (global)
-         retval = symbol_table::is_global (name);
+         val = symbol_table::global_varval(name);
       else
-         retval = symbol_table::is_local_variable (name);
+         val = symbol_table::varval(name);
+
+      return val.is_defined();
+   }
+
+   bool clearvar(const string& name, bool global) {
+      bool retval;
+
+      if (! isvar (name, global))
+         {
+            throw variable_name_exception (name + " not defined in " + ((global) ? "global" : "local") + " table");
+         }
+
+//       if (global)
+//          symbol_table::clear_global (name);
+//       else
+//          symbol_table::clear_variable (name);
+      symbol_table::clear_global (name);
+      symbol_table::clear_variable (name);
 
       return retval;
    }
@@ -289,6 +307,7 @@ BOOST_PYTHON_MODULE(_pytave) { /* {{{ */
    def("getvar", pytave::getvar);
    def("setvar", pytave::setvar);
    def("isvar", pytave::isvar);
+   def("clearvar", pytave::clearvar);
    def("push_scope", pytave::push_scope);
    def("pop_scope", pytave::pop_scope);
    def("get_exceptions", pytave::get_exceptions);

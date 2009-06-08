@@ -160,6 +160,11 @@ def path(*paths):
 	"""See Octave documentation"""
 	return _pytave.feval(1, "path", paths)[0]
 
+#xxx
+_pytave.setvar("foo", "value", True)
+print _pytave.isvar("foo", True)
+print _pytave.getvar("foo", True, True)
+#xxx
 class _VariablesDict(UserDict.DictMixin):
 	def __init__(self, global_variables, native):
 		self.global_variables = global_variables
@@ -182,6 +187,15 @@ class _VariablesDict(UserDict.DictMixin):
 		if not isinstance(name, basestring):
 			raise TypeError('Expected a string, not a ' + repr(type(name)))
 		return _pytave.isvar(name, self.global_variables)
+
+	def __delitem__(self, name):
+		if not isinstance(name, basestring):
+			raise TypeError('Expected a string, not a ' + repr(type(name)))
+		try:
+			_pytave.clearvar(name, self.global_variables)
+		except VarNameError:
+			raise KeyError('No Octave variable named ' + name)
+
 
 locals = _VariablesDict(global_variables=False, native=False)
 globals = _VariablesDict(global_variables=True, native=False)

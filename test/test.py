@@ -124,20 +124,20 @@ def testsetget(variables, name, value):
 	try:
 		variables[name] = value
 		if name not in variables:
-			print "FAIL: set/get: ", name,": Should exist, not there."
+			fail("set/get: %s: Should exist, not there." % name)
 		result, = pytave.feval(1, "isequal", value, variables[name])
 		if not result:
-			print "FAIL: set/get: ", name," -> ",value," results diverged"
+			fail("set/get: %s -> %s: results diverged" % (name, value))
 	except Exception, e:
-		print "FAIL: set/get: ", name, ":", e
+		fail("set/get: %s" % name, e)
 
 def testexception(exception, func):
 	try:
 		func()
-		print "FAIL: ", name
+		fail("Expecting %s but nothing was raised." % repr(exception))
 	except Exception, e:
 		if not isinstance(e, exception):
-			print "FAIL:", name, ":", e
+			fail("Expecting %s but got %s instead" % (repr(exception), repr(e)), e)
 
 def testlocalscope(x):
 
@@ -299,6 +299,33 @@ testexception(TypeError, lambda: func(1))
 testexception(TypeError, lambda: func([]))
 
 testlocalscope(5)
+
+testexception(KeyError, lambda: pytave.locals["localvariable"])
+pytave.locals["localvariable"] = 1
+if "localvariable" in pytave.globals:
+	fail("Local variable in globals")
+del pytave.locals["localvariable"]
+if "localvariable" in pytave.locals:
+	fail("Could not clear local variable")
+testexception(KeyError, lambda: pytave.locals["localvariable"])
+def func():
+	del pytave.locals["localvariable"]
+testexception(KeyError, lambda: func())
+
+testexception(KeyError, lambda: pytave.globals["globalvariable"])
+pytave.globals["globalvariable"] = 1
+if "globalvariable" in pytave.locals:
+	fail("Global variable in locals")
+print pytave.eval(1, "exist globalvariable")
+del pytave.globals["globalvariable"]
+pytave.eval(0, "clear -global globalvariable")
+print pytave.eval(1, "exist globalvariable")
+if "globalvariable" in pytave.globals:
+	fail("Could not clear global variable")
+testexception(KeyError, lambda: pytave.globals["globalvariable"])
+def func():
+	del pytave.globals["globalvariable"]
+testexception(KeyError, lambda: func())
 
 # Try converting Numeric arrays of objects and characters
 
