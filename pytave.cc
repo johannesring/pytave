@@ -260,6 +260,19 @@ namespace pytave { /* {{{ */
       return retval;
    }
 
+   void delvar(const string& name, bool global) {
+
+      if (global) {
+
+         // FIXME: workaround a bug in Octave 3.2.0.
+         if (! symbol_table::is_global (name))
+            symbol_table::insert (name).mark_global ();
+
+         symbol_table::clear_global (name);
+      } else
+         symbol_table::clear_variable (name);
+   }
+
    int push_scope() {
       symbol_table::scope_id local_scope = symbol_table::alloc_scope();
       symbol_table::set_scope(local_scope);
@@ -287,6 +300,7 @@ BOOST_PYTHON_MODULE(_pytave) { /* {{{ */
    def("getvar", pytave::getvar);
    def("setvar", pytave::setvar);
    def("isvar", pytave::isvar);
+   def("delvar", pytave::delvar);
    def("push_scope", pytave::push_scope);
    def("pop_scope", pytave::pop_scope);
    def("get_exceptions", pytave::get_exceptions);

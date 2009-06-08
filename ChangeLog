@@ -1,5 +1,10 @@
 2009-06-03  Jaroslav Hajek  <highegg@gmail.com>
 
+	* pytave.cc (delvar): New function.
+	* package/pytave.py (_VariablesDict.__delitem__): New method.
+
+2009-06-03  Jaroslav Hajek  <highegg@gmail.com>
+
 	* pytave.cc (isvar): Fix tests.
 
 2009-06-08  Jaroslav Hajek  <highegg@gmail.com>, David Grundberg  <individ@acc.umu.se>

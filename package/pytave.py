@@ -180,6 +180,18 @@ class _VariablesDict(UserDict.DictMixin):
 			raise TypeError('Expected a string, not a ' + repr(type(name)))
 		return _pytave.isvar(name, self.global_variables)
 
+	def __delitem__(self, name):
+		if not isinstance(name, basestring):
+			raise TypeError('Expected a string, not a ' + repr(type(name)))
+		# Octave does not gripe when clearing non-existent
+		# variables. To be consistent with Python dict
+		# behavior, we shall do so.
+		if self.__contains__(name):
+			_pytave.delvar(name, self.global_variables)
+		else:
+			raise KeyError('No Octave variable named ' + name)
+
+
 locals = _VariablesDict(global_variables=False)
 globals = _VariablesDict(global_variables=True)
 
