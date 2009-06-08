@@ -137,6 +137,9 @@ namespace pytave { /* {{{ */
 
       reset_error_handler();
       buffer_error_messages++;
+
+      // Updating the timestamp makes Octave reread changed files
+      Vlast_prompt_time.stamp();
       
       Py_BEGIN_ALLOW_THREADS
       retval = feval(funcname, octave_args, (nargout >= 0) ? nargout : 0);
@@ -177,6 +180,9 @@ namespace pytave { /* {{{ */
 
       reset_error_handler();
       buffer_error_messages++;
+
+      // Updating the timestamp makes Octave reread changed files
+      Vlast_prompt_time.stamp();
       
       Py_BEGIN_ALLOW_THREADS
       retval = eval_string(code, silent, parse_status,

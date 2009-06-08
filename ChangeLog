@@ -1,5 +1,9 @@
 2009-06-08  David Grundberg  <individ@acc.umu.se>
 
+	* pytave.cc (func_eval, str_eval): Reread changed files.
+
+2009-06-08  David Grundberg  <individ@acc.umu.se>
+
 	* test/test.py: New tests for pytave.globals and pytave.locals.
 	(testsetget, testexception): Call fail() instead of print.
 
