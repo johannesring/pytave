@@ -157,46 +157,31 @@ def path(*paths):
 	"""See Octave documentation"""
 	return _pytave.feval(1, "path", paths)[0]
 
-def getvar(name, fglobal = False):
-	 """Queries a variable by name from the current Octave scope.
-	 This is pretty much equivalent to calling eval(name), but is
-	 much faster because the Octave parser is bypassed. 
-	 
-	 global specifies that a global variable should be looked up;
-	 otherwise, local variable (in the current scope) is always
-	 searched for.
+class _VariablesDict(UserDict.DictMixin):
+	def __init__(self, global_variables, native=False):
+		self.global_variables = global_variables
+		self.native = native
 
-	 If the variable is not defined, VarNameError exception is raised.
-	 """
-	 return _pytave.getvar(name, fglobal)
+	def __getitem__(self, name):
+		if not isinstance(name, basestring):
+			raise TypeError('Expected a string, not a ' + repr(type(name)))
+		try:
+			return _pytave.getvar(name, self.global_variables)
+		except VarNameError:
+			raise KeyError('No Octave variable named ' + name)
 
-def setvar(name, val, fglobal = False):
-	 """Sets a variable by name from the current Octave scope.
-	 It is quite fast because the Octave parser is bypassed. 
+	def __setitem__(self, name, value):
+		if not isinstance(name, basestring):
+			raise TypeError('Expected a string, not a ' + repr(type(name)))
+		_pytave.setvar(name, value, self.global_variables)
 
-	 global specifies that a global variable should be assigned to;
-	 otherwise, local variable (in the current scope) is always
-	 searched for.
+	def __contains__(self, name):
+		if not isinstance(name, basestring):
+			raise TypeError('Expected a string, not a ' + repr(type(name)))
+		return _pytave.isvar(name, self.global_variables)
 
-	 If the variable is not defined, a new variable is created.
-
-	 If the variable name is not valid, VarNameError exception is raised.
-	 """
-
-	 return _pytave.setvar(name, val, fglobal)
-
-def isvar(name, fglobal = False):
-	 """Checks whether a variable exists in the current Octave scope.
-	 It is quite fast because the Octave parser is bypassed. 
-
-	 global specifies that a global variable should be looked up;
-	 otherwise, local variable (in the current scope) is always
-	 searched for.
-
-	 If the variable is defined, returns True, otherwise returns False.
-	 """
-
-	 return _pytave.isvar(name, fglobal)
+locals = _VariablesDict(global_variables=False)
+globals = _VariablesDict(global_variables=True)
 
 def push_scope():
 	 """Creates a new anonymous local variable scope on the Octave call

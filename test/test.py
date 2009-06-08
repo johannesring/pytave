@@ -120,32 +120,30 @@ def testevalexpect(numargout, code, expectations):
 	except Exception, e:
 		fail("eval: %s" % code, e)
 
-def testsetget(name,value):
-    try:
-	pytave.setvar(name,value)
-	result, = pytave.feval(1, "isequal", value, pytave.getvar(name))
-	if not result:
-	    print "FAIL: set/get: ", name," -> ",value," results diverged"
-    except Exception, e:
-	print "FAIL: set/get: ", name, ":"
-
-def testvarnameerror(name):
-    try:
-	pytave.setvar(name)
-	print "FAIL: ", name
-    except pytave.VarNameError:
-	pass
-    except Exception, e:
-	print "FAIL: ", name
-			fail("eval: %s : because %s != %s" % (code, results, expectations))
+def testsetget(variables, name, value):
+	try:
+		variables[name] = value
+		if name not in variables:
+			print "FAIL: set/get: ", name,": Should exist, not there."
+		result, = pytave.feval(1, "isequal", value, variables[name])
+		if not result:
+			print "FAIL: set/get: ", name," -> ",value," results diverged"
 	except Exception, e:
-		fail("eval: %s" % code, e)
+		print "FAIL: set/get: ", name, ":", e
+
+def testexception(exception, func):
+	try:
+		func()
+		print "FAIL: ", name
+	except Exception, e:
+		if not isinstance(e, exception):
+			print "FAIL:", name, ":", e
 
 def testlocalscope(x):
 
     @pytave.local_scope
     def sloppy_factorial(x):
-	pytave.setvar("x",x)
+	pytave.locals["x"] = x
 	xm1, = pytave.eval(1,"x-1")
 	if xm1 > 0:
 	    fxm1 = sloppy_factorial(xm1)
@@ -255,6 +253,29 @@ testparseerror(1, "endfunction")
 testevalexpect(1, "2 + 2", (4,))
 testevalexpect(1, "{2}", ([2],))
 testevalexpect(2, "struct('foo', 2)", ({'foo': 2},))
+
+testsetget(pytave.locals, "xxx", [1,2,3])
+testsetget(pytave.globals, "xxx", [1,2,3])
+
+def func():
+	pytave.locals["this is not a valid Octave identifier"] = 1
+testexception(pytave.VarNameError, func)
+
+def func():
+	pytave.locals["nonexistentvariable"]
+testexception(KeyError, func)
+
+def func(key):
+	pytave.locals[key] = 1
+testexception(TypeError, lambda: func(0.1))
+testexception(TypeError, lambda: func(1))
+testexception(TypeError, lambda: func([]))
+
+def func(key):
+	pytave.locals[key]
+testexception(TypeError, lambda: func(0.1))
+testexception(TypeError, lambda: func(1))
+testexception(TypeError, lambda: func([]))
 
 testlocalscope(5)
 

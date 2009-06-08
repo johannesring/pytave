@@ -15,6 +15,7 @@
 	(locals, globals): Default instances.
 	(_local_scope): Rename to _LocalScope
 	* test/test.py: New tests. Update old tests.
+	(testsetget, testexception): New functions.
 
 2009-06-03  Jaroslav Hajek  <highegg@gmail.com>
 
