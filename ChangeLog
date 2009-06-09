@@ -1,3 +1,8 @@
+2009-06-09  Jaroslav Hajek  <highegg@gmail.com>
+
+	* package/pytave.py (canonicalize): New function.
+	(feval): Update doc string.
+
 2009-06-08  David Grundberg  <individ@acc.umu.se>
 
 	* pytave.cc (func_eval, str_eval): Reread changed files.

@@ -94,8 +94,14 @@ def feval(nargout, funcname, *arguments):
 		int32, uint32       INT, UINT
 		int16, uint16       SHORT, USHORT
 		int8, unint8        SBYTE, UBYTE
-		char                CHAR (if native = False)
-		cell                OBJECT (if native = False)
+		char                CHAR
+		cell                OBJECT
+
+	If an array is a row vector, it is converted to a 1D Numeric
+	array. Further, a character row vector is converted to a
+	Python string, and a cell row vector is converted to a list.
+
+	To reverse these simplifications, see pytave.canonicalize.
 
 	All other values causes a pytave.ValueConvertError to be
 	raised. This exception inherits TypeError.
@@ -247,6 +253,52 @@ def local_scope(func):
 			  pytave.pop_scope()
 	 """
 	 return _LocalScope(func)
+
+def canonicalize(obj, level=None):
+	"""Canonicalizes output values as returned from Octave.
+	By default, Pytave applies aggressive simplifications to
+	the results returned - row vectors are converted to 1D
+	Numeric arrays,	row character vectors are further converted
+	to Python strings, and row cell vectors are converted to
+	Python lists. This function can be used to reverse these
+	simplifications if necessary. It works recursively on tuples,
+	lists, object arrays and dicts.
+	level specifies the requested level of recursion. If not
+	given, infinite recursion is used.
+	"""
+
+	if level == 0:
+	    return obj
+	elif level:
+	    level = level - 1
+
+	if isinstance(obj,list):
+	    objr = Numeric.array([None]*len(obj),Numeric.PyObject)
+	    for i in range(len(obj)):
+		objr[i] = canonicalize(obj[i], level)
+	    return Numeric.reshape(objr,(1,len(obj)))
+	elif isinstance(obj,tuple):
+	    return tuple(canonicalize(o,level) for o in obj)
+	elif isinstance(obj,str):
+	    return Numeric.array([obj],Numeric.Character)
+	elif isinstance(obj,dict):
+	    dictr = {}
+	    for key,value in dict.iteritems():
+		dictr[key] = canonicalize(value,level)
+	    return dictr
+	elif isinstance(obj,Numeric.ArrayType):
+	    dims = Numeric.shape(obj)
+	    if obj.typecode() == Numeric.PyObject:
+		numel = Numeric.size(obj)
+		objr = Numeric.array([None]*numel)
+		for i in range(numel):
+		    objr[i] = canonicalize(obj.flat[i],level)
+		obj = Numeric.reshape(objr, dims)
+	    if len(dims) == 1:
+		obj = Numeric.reshape(obj, (1, dims[0]))
+	    return obj
+	else:
+	    return obj
 
 # Emacs
 #	Local Variables:
