@@ -1,3 +1,9 @@
+2009-06-17  Jaroslav Hajek  <highegg@gmail.com>
+
+	* package/pytave.py (stripdict): New function.
+	(narrowlist): New function.
+	(simplify): New function.
+
 2009-06-16  Jaroslav Hajek  <highegg@gmail.com>
 
 	* octave_to_python.cc 
