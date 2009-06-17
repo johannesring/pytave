@@ -112,11 +112,6 @@ namespace pytave {
       for (int i = 0; i < dims.length(); i++) {
          dimensions[i] = dims(i);
       }
-      // Simplify row vectors to 1d arrays.
-      if (len == 2 && dimensions[0] == 1) {
-         dimensions[0] = dimensions[1];
-         len = 1;
-      }
 
       return (PyArrayObject *)PyArray_FromDims(
          len, dimensions, pyarrtype);
@@ -246,6 +241,11 @@ namespace pytave {
          return create_sint_array<int8NDArray, sizeof(int8_t)>(
             matrix.int8_array_value());
       }
+      if (matrix.is_bool_type()) {
+         // Numeric does not support bools, use uint8.
+         return create_uint_array<uint8NDArray, sizeof(uint8_t)>(
+            matrix.uint8_array_value());
+      }
       if (matrix.is_string()) {
          return create_array<char, charNDArray>(
             matrix.char_array_value(), PyArray_CHAR);
@@ -265,43 +265,17 @@ namespace pytave {
       py_object = object(handle<PyObject>((PyObject *)pyarr));
    }
 
-   static inline bool is_1xn_or_0x0(const dim_vector& dv) {
-      return (dv.length() == 2 && (dv(0) == 1 || (dv(0) == 0 && dv(1) == 0)));
-   }
-
-   static void octcell_to_pyobject(boost::python::object &py_object,
-                                   const Cell& cell) {
-      if (is_1xn_or_0x0 (cell.dims ())) {
-         py_object = boost::python::list();
-
-         for(octave_idx_type i = 0 ; i < cell.length(); i++) {
-            boost::python::object py_val;
-
-            octvalue_to_pyobj(py_val, cell.elem(i));
-
-            ((boost::python::list&)py_object).insert(i, py_val);
-         }
-      } else {
-         octvalue_to_pyarr (py_object, octave_value (cell));
-      }
-   }
-
    static void octmap_to_pyobject(boost::python::object &py_object,
                                   const Octave_map& map) {
       py_object = boost::python::dict();
       string_vector keys = map.keys();
-      bool scalar = map.dims().all_ones();
 
       for(octave_idx_type i = 0 ; i < keys.length(); i++) {
          boost::python::object py_val;
 
          const Cell c = map.contents(keys[i]);
 
-         if (scalar) {
-            octvalue_to_pyobj(py_val, c(0));
-         } else {
-            octcell_to_pyobject(py_val, c);
-         }
+         octvalue_to_pyarr(py_val, c);
 
          py_object[keys[i]] = py_val;
       }
@@ -309,33 +283,14 @@ namespace pytave {
 
    void octvalue_to_pyobj(boost::python::object &py_object,
                           const octave_value& octvalue) {
-      if (octvalue.is_undefined())
+      if (octvalue.is_undefined()) {
          throw value_convert_exception(
             "Octave value `undefined'. Can not convert to a Python object");
-      else if (octvalue.is_scalar_type()) {
-         if (octvalue.is_bool_type())
-            py_object = object(octvalue.bool_value());
-         else if (octvalue.is_real_scalar())
-            py_object = object(octvalue.double_value());
-         else if (octvalue.is_complex_scalar())
-            py_object = object(octvalue.complex_value());
-         else if (octvalue.is_integer_type())
-            py_object = object(octvalue.int_value());
-         else
-            throw value_convert_exception(
-               "Conversion for this scalar not implemented");
-      } else if (octvalue.is_string()) {
-         if (is_1xn_or_0x0 (octvalue.dims ())) {
-            py_object = object(octvalue.string_value());
-         } else {
-            octvalue_to_pyarr(py_object, octvalue);
-         }
-      } else if (octvalue.is_matrix_type()) {
+      } else if (octvalue.is_numeric_type() || octvalue.is_string()
+                 || octvalue.is_cell()) {
          octvalue_to_pyarr(py_object, octvalue);
       } else if (octvalue.is_map()) {
          octmap_to_pyobject(py_object, octvalue.map_value());
-      } else if (octvalue.is_cell()) {
-         octcell_to_pyobject(py_object, octvalue.cell_value());
       } else
          throw value_convert_exception(
             "Conversion from Octave value not implemented");
