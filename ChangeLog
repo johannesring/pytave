@@ -1,3 +1,16 @@
+2009-06-19  Jaroslav Hajek  <highegg@gmail.com>
+
+	* configure.ac: Support --enable-numpy
+	* setup.py.in: Dynamically determine NumPy include path.
+	* pytave.cc (get_module_name): New function.
+	* octave_to_python.cc (octvalue_to_pyarrobj): 
+	Support bool arrays with NumPy.
+	* python_to_octave.cc (pyarr_to_octvalue, 
+	copy_pyarrobj_to_octarray_boot): Likewise.
+	* package/pytave.py: Dynamically import Numeric,
+	forward to numpy.oldnumeric if run with NumPy.
+	* test/test.py: Update some tests.
+
 2009-06-17  Jaroslav Hajek  <highegg@gmail.com>
 
 	* package/pytave.py (stripdict): New function.

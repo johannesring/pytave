@@ -2,7 +2,7 @@
 # -*- coding:utf-8 -*-
 
 import pytave
-import Numeric
+from pytave import Numeric
 import traceback
 
 print "No messages indicates test pass."
@@ -40,6 +40,9 @@ pytave.eval(0, "function [result] = test_return(arg); result = arg; endfunction"
 
 pytave.feval(1, "test_return", 1)
 
+def equals(a,b):
+    return Numeric.alltrue(Numeric.ravel(a == b))
+
 def fail(msg, exc=None):
 	print "FAIL:", msg
 	traceback.print_stack()
@@ -50,7 +53,7 @@ def fail(msg, exc=None):
 def testequal(value):
 	try:
 		nvalue, = pytave.feval(1, "test_return", value)
-		if nvalue != value:
+		if not equals(value, nvalue):
 			fail("as %s != %s" % (value, nvalue))
 	except TypeError, e:
 		fail(value, e)
@@ -58,7 +61,7 @@ def testequal(value):
 def testexpect(value, expected):
 	try:
 		nvalue, = pytave.feval(1, "test_return", value)
-		if nvalue != expected:
+		if not equals(value, nvalue):
 			fail("sent in %s, expecting %s, got %s", (value, expected, nvalue))
 	except TypeError, e:
 		fail(value, e)
@@ -66,9 +69,11 @@ def testexpect(value, expected):
 def testmatrix(value):
 	try:
 		nvalue, = pytave.feval(1, "test_return", value)
-		class1 = pytave.feval(1, "class", value)
-		class2 = pytave.feval(1, "class", nvalue)
-		if nvalue != value:
+		class1, = pytave.feval(1, "class", value)
+		class1 = class1.tostring()
+		class2, = pytave.feval(1, "class", nvalue)
+		class2 = class2.tostring()
+		if not equals(value, nvalue):
 			fail("as %s != %s" % (value, nvalue))
 		if value.shape != nvalue.shape:
 			fail("Size check failed for: %s. Expected shape %s, got %s  with shape %s" \
@@ -115,7 +120,7 @@ def testvalueok(*value):
 def testevalexpect(numargout, code, expectations):
 	try:
 		results = pytave.eval(numargout, code);
-		if results != expectations:
+		if not equals(results, expectations):
 			fail("eval: %s : because %s != %s" % (code, results, expectations))
 	except Exception, e:
 		fail("eval: %s" % code, e)
@@ -145,12 +150,14 @@ def testlocalscope(x):
     def sloppy_factorial(x):
 	pytave.locals["x"] = x
 	xm1, = pytave.eval(1,"x-1")
+	xm1 = xm1.toscalar()
 	if xm1 > 0:
 	    fxm1 = sloppy_factorial(xm1)
 	else:
 	    fxm1 = 1
 	pytave.locals["fxm1"] = fxm1
 	fx, = pytave.eval(1,"x * fxm1")
+	fx = fx.toscalar()
 	return fx
 
     try:

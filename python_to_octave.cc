@@ -179,6 +179,10 @@ namespace pytave {
          /* Commonly Numeric.array(..., Numeric.Complex) */
          ARRAYCASE(PyArray_CDOUBLE, Complex)
 
+#ifdef HAVE_NUMPY
+         ARRAYCASE(PyArray_BOOL, bool)
+#endif
+
          ARRAYCASE(PyArray_OBJECT, PyObject *)
 
          default:
@@ -271,6 +275,11 @@ namespace pytave {
             // FIXME: is the following needed?
             octvalue = octvalue.convert_to_str(true, true, '"');
             break;
+#ifdef HAVE_NUMPY
+         case PyArray_BOOL:
+            pyarrobj_to_octvalueNd<boolNDArray>(octvalue, pyarr, dims);
+            break;
+#endif
          case PyArray_OBJECT:
             pyarrobj_to_octvalueNd<Cell>(octvalue, pyarr, dims);
             break;
