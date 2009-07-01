@@ -187,7 +187,8 @@ testequal(["mystring"])
 testequal(["mystringåäöÅÄÖ"])
 
 testexpect(1,Numeric.array([[1]],Numeric.Int))
-testexpect(1L,Numeric.array([[1]],Numeric.Int64))
+if "Int64" in Numeric.__dict__:
+    testexpect(1L,Numeric.array([[1]],Numeric.Int64))
 testexpect(1.0,Numeric.array([[1]],Numeric.Float))
 
 # Vector arrays

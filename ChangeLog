@@ -1,3 +1,13 @@
+2009-07-01  David Grundberg  <individ@acc.umu.se>
+
+	* pytave.cc [HAVE_USELOCALE] (init, func_eval, str_eval): Run
+	Octave interpreter in C locale.
+	* configure.ac: Define HAVE_USELOCALE. Substitute @PYTHON@. Added
+	checks for integer typedefs.  Make setup.py executable.  Friendly
+	message on configuration completion.
+	* setup.py.in: Let setup.py be interpreted by the same version of
+	Python we configured for.
+
 2009-06-19  Jaroslav Hajek  <highegg@gmail.com>
 
 	* configure.ac: Support --enable-numpy
