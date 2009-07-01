@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!@PYTHON@
 # -*- coding: utf-8; c-basic-offset: 3; indent-tabs-mode: nil; tab-width: 3; -*-
 # @configure_input@
 

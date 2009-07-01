@@ -36,6 +36,9 @@
 #include <iostream>
 #include <sstream>
 #include <sys/types.h>
+#ifdef HAVE_USELOCALE
+#include <locale.h>
+#endif
 
 #include "pytavedefs.h"
 
@@ -46,9 +49,16 @@
 using namespace boost::python;
 using namespace std;
 
-namespace pytave { /* {{{ */ 
+namespace pytave { /* {{{ */
+
+#ifdef HAVE_USELOCALE
+   locale_t c_locale;
+#endif
 
    void init(bool silent = true) {
+#ifdef HAVE_USELOCALE
+      c_locale = newlocale(LC_ALL, "C", 0);
+#endif
 
       if (!octave_error_exception::init()
           || !value_convert_exception::init()
@@ -73,7 +83,17 @@ namespace pytave { /* {{{ */
          argc = 3;
       }
 
+#ifdef HAVE_USELOCALE
+      // Set C locale
+      locale_t old_locale = uselocale(c_locale);
+#endif
+
       octave_main(argc, const_cast<char**>(argv), 1);
+
+#ifdef HAVE_USELOCALE
+      // Reset locale
+      uselocale(old_locale);
+#endif
 
       // Initialize Python Numeric Array
 
@@ -133,7 +153,6 @@ namespace pytave { /* {{{ */
       return exceptionmsg.str ();
    }
 
-     
    boost::python::tuple func_eval(const int nargout,
                                   const string &funcname,
                                   const boost::python::tuple &arguments) {
@@ -147,10 +166,20 @@ namespace pytave { /* {{{ */
 
       // Updating the timestamp makes Octave reread changed files
       Vlast_prompt_time.stamp();
-      
+
+#ifdef HAVE_USELOCALE
+      // Set C locale
+      locale_t old_locale = uselocale(c_locale);
+#endif
+
       Py_BEGIN_ALLOW_THREADS
       retval = feval(funcname, octave_args, (nargout >= 0) ? nargout : 0);
       Py_END_ALLOW_THREADS
+
+#ifdef HAVE_USELOCALE
+      // Reset locale
+      uselocale(old_locale);
+#endif
 
       if (error_state != 0) {
 // error_state values:
@@ -190,11 +219,21 @@ namespace pytave { /* {{{ */
 
       // Updating the timestamp makes Octave reread changed files
       Vlast_prompt_time.stamp();
-      
+
+#ifdef HAVE_USELOCALE
+      // Set C locale
+      locale_t old_locale = uselocale(c_locale);
+#endif
+
       Py_BEGIN_ALLOW_THREADS
       retval = eval_string(code, silent, parse_status,
          (nargout >= 0) ? nargout : 0);
       Py_END_ALLOW_THREADS
+
+#ifdef HAVE_USELOCALE
+      // Reset locale
+      uselocale(old_locale);
+#endif
 
       if (parse_status != 0 || error_state != 0) {
 // error_state values:
@@ -301,7 +340,7 @@ namespace pytave { /* {{{ */
             octave_call_stack::pop();
          }
    }
-      
+
 } /* namespace pytave }}} */
 
 BOOST_PYTHON_MODULE(_pytave) { /* {{{ */
