@@ -179,6 +179,10 @@ namespace pytave {
          /* Commonly Numeric.array(..., Numeric.Complex) */
          ARRAYCASE(PyArray_CDOUBLE, Complex)
 
+#ifdef HAVE_NUMPY
+         ARRAYCASE(PyArray_BOOL, bool)
+#endif
+
          ARRAYCASE(PyArray_OBJECT, PyObject *)
 
          default:
@@ -271,6 +275,11 @@ namespace pytave {
             // FIXME: is the following needed?
             octvalue = octvalue.convert_to_str(true, true, '"');
             break;
+#ifdef HAVE_NUMPY
+         case PyArray_BOOL:
+            pyarrobj_to_octvalueNd<boolNDArray>(octvalue, pyarr, dims);
+            break;
+#endif
          case PyArray_OBJECT:
             pyarrobj_to_octvalueNd<Cell>(octvalue, pyarr, dims);
             break;
@@ -310,8 +319,6 @@ namespace pytave {
 
       dim_vector dims = dim_vector(1, 1);
 
-      bool dims_match = true;
-
       Array<octave_value> vals (length);
       Array<std::string> keys (length);
 
@@ -346,15 +353,13 @@ namespace pytave {
 
          pyobj_to_octvalue(val, tuple[1]);
 
-         if(dims_match && val.is_cell()) {
-            dim_vector dv = val.dims();
+         if(val.is_cell()) {
             if(i == 0) {
-               dims = dv;
-            } else {
-               dims_match = dims == dv;
+               dims = val.dims();
+            } else if (val.numel() != 1 && val.dims() != dims){
+               throw object_convert_exception(
+                  "Dimensions of the struct fields do not match");
             }
-         } else {
-            dims_match = false;
          }
       }
 
@@ -365,10 +370,15 @@ namespace pytave {
          std::string& key = keys(i);
          octave_value val = vals(i);
 
-         if(dims_match) {
-            map.assign(key, val.cell_value ());
+         if(val.is_cell()) {
+            const Cell c = val.cell_value();
+            if (c.numel () == 1) {
+               map.assign(key, Cell(dims, c(0)));
+            } else {
+               map.assign(key, c);
+            }
          } else {
-            map.assign(key, val);
+            map.assign(key, Cell(dims, val));
          }
       }
       oct_value = map;

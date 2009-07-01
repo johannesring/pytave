@@ -23,7 +23,7 @@
 import _pytave
 import UserDict
 import sys
-import Numeric
+
 
 arg0 = sys.argv[0]
 interactive = sys.stdin.isatty() and (arg0 == '' or arg0 == '-')
@@ -31,6 +31,18 @@ interactive = sys.stdin.isatty() and (arg0 == '' or arg0 == '-')
 _pytave.init(interactive)
 (OctaveError, ValueConvertError, ObjectConvertError, ParseError, \
  VarNameError) = _pytave.get_exceptions();
+
+# Dynamic import. *Must* go after _pytave.init() !
+__modname__ = _pytave.get_module_name()
+if __modname__ == 'numpy':
+    from numpy import oldnumeric as Numeric
+elif __modname__ == 'Numeric':
+    import Numeric
+elif __modname__ == 'numarray':
+    # FIXME: Is this OK?
+    import numarray as Numeric
+else:
+    raise ImportError("Failed to import module: %s" % __modname__)
 
 def feval(nargout, funcname, *arguments):
 
@@ -73,18 +85,16 @@ def feval(nargout, funcname, *arguments):
 	raised. This exception inherits TypeError.
 
 	When dicts are converted, all keys must be strings and
-	constitute valid Octave identifiers. By default, scalar
-	structures are created. However, when all values evaluate
-	to cell arrays with matching dimensions, an Octave struct
-	array is created.
+	constitute valid Octave identifiers. The behavior is
+	analogical to the Octave "struct" function: values that
+	evaluate to cells must have matching dimensions, singleton
+	cells and non-cell values are expanded.
 	
 	Octave to Python
 	================
 	
-	Scalar values to objects:
-		bool                bool
-		real scalar         float (64-bit)
-		struct              dict
+        All scalar values are regarded as 1x1 matrices, as they are in
+	Octave.
 
 	Matrix values to Numeric arrays:
 	   	double              DOUBLE
@@ -94,8 +104,11 @@ def feval(nargout, funcname, *arguments):
 		int32, uint32       INT, UINT
 		int16, uint16       SHORT, USHORT
 		int8, unint8        SBYTE, UBYTE
-		char                CHAR (if native = False)
-		cell                OBJECT (if native = False)
+		char                CHAR
+		cell                OBJECT
+
+	Structs are converted to dicts, where each value is an OBJECT
+	array.
 
 	All other values causes a pytave.ValueConvertError to be
 	raised. This exception inherits TypeError.
@@ -144,6 +157,63 @@ def eval(nargout, code, silent=True):
 	"""
 
 	return _pytave.eval(nargout, code, silent)
+
+def stripdict(dictarray):
+    """A helper function to convert structures obtained from Octave.
+    Because in Octave, all structs are also arrays, they are returned
+    as dicts of object arrays. In the common case of a 1x1 struct, 
+    stripdict strips the values."""
+    
+    sdict = {}
+    for key in dictarray:
+	sdict[key] = dictarray[key][0,0]
+    return sdict
+
+def narrowlist(objarray):
+    """A helper function to convert cell arrays obtained from Octave.
+    Octave cells are returned as Numeric object arrays. This function
+    will flatten the array and convert it into a 1D list."""
+
+    return Numeric.ravel(objarray).tolist()
+
+def simplify(obj):
+    """A helper function to convert results obtained from Octave.
+    This will convert all 1x1 arrays to scalars, vectors to 1D arrays,
+    1xN and 0x0 character arrays to strings, 1xN, Nx1 and 0x0 cell
+    arrays to lists, and strip scalar dicts. It will work recursively."""
+
+    def vectordims(dims,column_allowed = True):
+	return (len(dims) == 2 and 
+		((dims[0] == 1 or (column_allowed and dims[1] == 1)) or
+		(dims[0] == 0 and dims[1] == 0)))
+
+    if isinstance(obj,Numeric.ArrayType):
+	tc = obj.typecode()
+	if tc == 'O':
+	    if vectordims(Numeric.shape(obj)):
+		return map(simplify,narrowlist(obj))
+	elif tc == 'c':
+	    if vectordims(Numeric.shape(obj), False):
+		return obj.tostring()
+	else:
+	    dims = Numeric.shape(obj)
+	    if dims == (1,1):
+		return obj.toscalar()
+	    elif vectordims(dims):
+		return Numeric.ravel(obj)
+    elif isinstance(obj,dict):
+	sobj = {}
+	for key in obj:
+	    sval = simplify(obj[key])
+	    if isinstance(sval,list) and len(sval) == 1:
+		sval = sval[0]
+	    sobj[key] = sval
+	return sobj
+    elif isinstance(obj,tuple):
+	return tuple(map(simplify,obj))
+    ## default.
+    return obj
+
 
 def addpath(*arguments):
 	"""See Octave documentation"""

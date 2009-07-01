@@ -1,3 +1,41 @@
+2009-06-19  Jaroslav Hajek  <highegg@gmail.com>
+
+	* configure.ac: Support --enable-numpy
+	* setup.py.in: Dynamically determine NumPy include path.
+	* pytave.cc (get_module_name): New function.
+	* octave_to_python.cc (octvalue_to_pyarrobj): 
+	Support bool arrays with NumPy.
+	* python_to_octave.cc (pyarr_to_octvalue, 
+	copy_pyarrobj_to_octarray_boot): Likewise.
+	* package/pytave.py: Dynamically import Numeric,
+	forward to numpy.oldnumeric if run with NumPy.
+	* test/test.py: Update some tests.
+
+2009-06-17  Jaroslav Hajek  <highegg@gmail.com>
+
+	* package/pytave.py (stripdict): New function.
+	(narrowlist): New function.
+	(simplify): New function.
+
+2009-06-16  Jaroslav Hajek  <highegg@gmail.com>
+
+	* octave_to_python.cc 
+	(createPyArr): Don't simplify row vectors to 1D arrays.
+	(octvalue_to_pyarrobj): Simplify, don't special-case scalars.
+	(octcell_to_pyobject): Remove.
+	(octmap_to_pyobject): Simplify, return uniform results.
+	(is_1xn_or_0x0): Remove.
+	* python_to_octave.cc
+	(pydict_to_octmap): Revert to the former behaviour aka Octave's
+	`struct'.
+	* package/pytave.py (canonicalize): Remove.
+	* test/test.py: Update tests.
+
+2009-06-09  Jaroslav Hajek  <highegg@gmail.com>
+
+	* package/pytave.py (canonicalize): New function.
+	(feval): Update doc string.
+
 2009-06-08  David Grundberg  <individ@acc.umu.se>
 
 	* pytave.cc (func_eval, str_eval): Reread changed files.

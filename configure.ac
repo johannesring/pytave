@@ -17,6 +17,17 @@ AC_CONFIG_HEADER([config.h])
 
 AC_PRESERVE_HELP_ORDER
 
+AC_ARG_ENABLE(numpy,
+	      [AS_HELP_STRING([--enable-numpy],
+			      [use NumPy module (experimental)
+			      @<:@default=no@:>@])],
+			      [pytave_enable_numpy="$enableval"],
+			      [pytave_enable_numpy=no]) dnl TODO: Check?
+ 
+if test "$pytave_enable_numpy" == "yes" ; then
+	AC_DEFINE([HAVE_NUMPY], 1, [Define if using NumPy])
+fi
+
 pytave_libs_ok=
 
 AX_OCTAVE([], [], [pytave_libs_ok=no])
@@ -85,6 +96,7 @@ AS_IF(test "x${prefix}" == "xNONE",
 PYTAVE_OCTAVE_RPATH="$OCTAVE_LIBRARYDIR"
 AC_SUBST(PYTAVE_OCTAVE_RPATH)
 AC_SUBST(PYTAVE_MODULE_INSTALL_PATH)
+AC_SUBST(pytave_enable_numpy) 
 
 # Substitutes for the Jamfile. XXX: Replace lib*.so with OS independent name.
 AC_SUBST(JAM_LIBOCTAVE, $OCTAVE_LIBRARYDIR/liboctave.so)
