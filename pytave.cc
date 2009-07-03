@@ -24,27 +24,29 @@
 #include <boost/python/numeric.hpp>
 
 #undef HAVE_STAT /* Both boost.python and octave define HAVE_STAT... */
+#undef HAVE_FSTAT /* Both boost.python and octave define HAVE_FSTAT... */
 #include <octave/oct.h>
+
 #include <octave/oct-map.h>
 #include <octave/octave.h>
 #include <octave/ov.h>
 #include <octave/parse.h>
-#include <octave/utils.h>
 #include <octave/symtab.h>
 #include <octave/toplev.h>
+#include <octave/utils.h>
 
 #include <iostream>
-#include <sstream>
-#include <sys/types.h>
 #ifdef HAVE_USELOCALE
 #include <locale.h>
 #endif
+#include <sstream>
+#include <sys/types.h>
 
 #include "pytavedefs.h"
 
 #include "exceptions.h"
-#include "python_to_octave.h"
 #include "octave_to_python.h"
+#include "python_to_octave.h"
 
 using namespace boost::python;
 using namespace std;
@@ -341,6 +343,29 @@ namespace pytave { /* {{{ */
          }
    }
 
+// Make sure Octave is correctly unloaded. We cannot depend on Octave running
+// at the (true) process atexit point, because at that time the Octave library
+// might have been unloaded.
+//
+// At least that is the hypothesis, since Octave (in certain circumstances)
+// cause a segmentation fault in do_octave_atexit called from the exit
+// function. (One Octave call that causes this is "sleep(0)".)
+   void atexit () {
+#ifdef HAVE_USELOCALE
+      // Set C locale
+      locale_t old_locale = uselocale(c_locale);
+#endif
+
+      Py_BEGIN_ALLOW_THREADS
+      do_octave_atexit();
+      Py_END_ALLOW_THREADS
+
+#ifdef HAVE_USELOCALE
+      // Reset locale
+      uselocale(old_locale);
+#endif
+   }
+
 } /* namespace pytave }}} */
 
 BOOST_PYTHON_MODULE(_pytave) { /* {{{ */
@@ -356,6 +381,7 @@ BOOST_PYTHON_MODULE(_pytave) { /* {{{ */
    def("delvar", pytave::delvar);
    def("push_scope", pytave::push_scope);
    def("pop_scope", pytave::pop_scope);
+   def("atexit", pytave::atexit);
    def("get_exceptions", pytave::get_exceptions);
 
    register_exception_translator<pytave::pytave_exception>(

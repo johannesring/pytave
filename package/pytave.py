@@ -20,10 +20,10 @@
 
 """Python to Octave bridge"""
 
-import _pytave
 import UserDict
+import _pytave
+import atexit
 import sys
-
 
 arg0 = sys.argv[0]
 interactive = sys.stdin.isatty() and (arg0 == '' or arg0 == '-')
@@ -43,6 +43,11 @@ elif __modname__ == 'numarray':
     import numarray as Numeric
 else:
     raise ImportError("Failed to import module: %s" % __modname__)
+
+def _atexit():
+	_pytave.atexit()
+
+atexit.register(_atexit)
 
 def feval(nargout, funcname, *arguments):
 
