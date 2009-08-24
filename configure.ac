@@ -17,35 +17,20 @@ AC_CONFIG_HEADER([config.h])
 
 AC_PRESERVE_HELP_ORDER
 
-AC_ARG_ENABLE(float-matrices,
-	[AS_HELP_STRING([--enable-float-matrices],
-		[use Octave float matrices (experimental)
-		@<:@default=no@:>@])],
-	[pytave_enable_float="$enableval"],
-	[pytave_enable_float=no]) dnl TODO: Change to check someday
+AC_ARG_ENABLE(numpy,
+	      [AS_HELP_STRING([--enable-numpy],
+			      [use NumPy module (experimental)
+			      @<:@default=no@:>@])],
+			      [pytave_enable_numpy="$enableval"],
+			      [pytave_enable_numpy=no]) dnl TODO: Check?
+ 
+if test "$pytave_enable_numpy" == "yes" ; then
+	AC_DEFINE([HAVE_NUMPY], 1, [Define if using NumPy])
+fi
 
 pytave_libs_ok=
 
 AX_OCTAVE([], [], [pytave_libs_ok=no])
-
-AS_IF([test "x$pytave_enable_float" = "xcheck" dnl
-            -o "x$pytave_enable_float" = "xyes"], [
-	AX_OCTAVE_FLOAT([
-		AC_DEFINE([PYTAVE_USE_OCTAVE_FLOATS], [],
-			[Define to enable conversion of Octave float
-			matrices. If not defined, float matrices are
-			expanded to double matrices])
-	], [
-		AS_IF([test "x$pytave_enable_float" = "xyes"], [
-			AC_WARN([[
-========================================================================
-Float matrices enabled, but could not compile test program against
-Octave.
-========================================================================]])
-			pytave_libs_ok=no
-		])
-	])
-])
 
 # Pick a Python library to use
 AX_PYTHON_DEVEL([], [], [pytave_libs_ok=no])
@@ -89,12 +74,23 @@ AC_PROG_MAKE_SET
 # Checks for libraries.
 
 # Checks for header files.
+AC_CHECK_HEADERS([locale.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
 AC_C_CONST
+AC_C_INLINE
+AC_TYPE_INT16_T
+AC_TYPE_INT32_T
+AC_TYPE_INT64_T
+AC_TYPE_INT8_T
+AC_TYPE_SIZE_T
+AC_TYPE_UINT16_T
+AC_TYPE_UINT32_T
+AC_TYPE_UINT8_T
 
 # Checks for library functions.
+AC_CHECK_FUNCS([uselocale], [pytave_have_uselocale=yes], [pytave_have_uselocale=no])
 
 # This needs a more usable, less unusual solution.
 AS_IF(test "x${prefix}" == "xNONE",
@@ -111,11 +107,32 @@ AS_IF(test "x${prefix}" == "xNONE",
 PYTAVE_OCTAVE_RPATH="$OCTAVE_LIBRARYDIR"
 AC_SUBST(PYTAVE_OCTAVE_RPATH)
 AC_SUBST(PYTAVE_MODULE_INSTALL_PATH)
+AC_SUBST(pytave_enable_numpy)
 
 # Substitutes for the Jamfile. XXX: Replace lib*.so with OS independent name.
 AC_SUBST(JAM_LIBOCTAVE, $OCTAVE_LIBRARYDIR/liboctave.so)
 AC_SUBST(JAM_LIBCRUFT, $OCTAVE_LIBRARYDIR/libcruft.so)
 AC_SUBST(JAM_LIBOCTINTERP, $OCTAVE_LIBRARYDIR/liboctinterp.so)
 
+# setup.py
+AC_SUBST(PYTHON)
+
 # Substitute in these files, copy project-root.jam to VPATH too
 AC_OUTPUT([Makefile Jamfile setup.py project-root.jam])
+
+chmod u+x "setup.py"
+
+AC_MSG_NOTICE([
+========================================================================
+Pytave now configured with the following setup:
+
+Dependencies
+  Octave ............. $OCTAVE_INCLUDEDIR
+  Python ............. $PYTHON_CPPFLAGS
+    executable ....... $PYTHON
+
+Features
+  NumPy .............. $pytave_enable_numpy
+  uselocale .......... $pytave_have_uselocale
+
+========================================================================])

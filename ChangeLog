@@ -1,3 +1,180 @@
+2009-07-03  David Grundberg  <individ@acc.umu.se>
+
+	* pytave.cc: Sorted includes.
+	(atexit): New function. Call do_octave_atexit before Python
+	unloads shared libraries.
+	* package/pytave.py (_atexit): New function.
+
+2009-07-01  David Grundberg  <individ@acc.umu.se>
+
+	* pytave.cc [HAVE_USELOCALE] (init, func_eval, str_eval): Run
+	Octave interpreter in C locale.
+	* configure.ac: Define HAVE_USELOCALE. Substitute @PYTHON@. Added
+	checks for integer typedefs.  Make setup.py executable.  Friendly
+	message on configuration completion.
+	* setup.py.in: Let setup.py be interpreted by the same version of
+	Python we configured for.
+
+2009-06-19  Jaroslav Hajek  <highegg@gmail.com>
+
+	* configure.ac: Support --enable-numpy
+	* setup.py.in: Dynamically determine NumPy include path.
+	* pytave.cc (get_module_name): New function.
+	* octave_to_python.cc (octvalue_to_pyarrobj): 
+	Support bool arrays with NumPy.
+	* python_to_octave.cc (pyarr_to_octvalue, 
+	copy_pyarrobj_to_octarray_boot): Likewise.
+	* package/pytave.py: Dynamically import Numeric,
+	forward to numpy.oldnumeric if run with NumPy.
+	* test/test.py: Update some tests.
+
+2009-06-17  Jaroslav Hajek  <highegg@gmail.com>
+
+	* package/pytave.py (stripdict): New function.
+	(narrowlist): New function.
+	(simplify): New function.
+
+2009-06-16  Jaroslav Hajek  <highegg@gmail.com>
+
+	* octave_to_python.cc 
+	(createPyArr): Don't simplify row vectors to 1D arrays.
+	(octvalue_to_pyarrobj): Simplify, don't special-case scalars.
+	(octcell_to_pyobject): Remove.
+	(octmap_to_pyobject): Simplify, return uniform results.
+	(is_1xn_or_0x0): Remove.
+	* python_to_octave.cc
+	(pydict_to_octmap): Revert to the former behaviour aka Octave's
+	`struct'.
+	* package/pytave.py (canonicalize): Remove.
+	* test/test.py: Update tests.
+
+2009-06-09  Jaroslav Hajek  <highegg@gmail.com>
+
+	* package/pytave.py (canonicalize): New function.
+	(feval): Update doc string.
+
+2009-06-08  David Grundberg  <individ@acc.umu.se>
+
+	* pytave.cc (func_eval, str_eval): Reread changed files.
+
+2009-06-08  David Grundberg  <individ@acc.umu.se>
+
+	* test/test.py: New tests for pytave.globals and pytave.locals.
+	(testsetget, testexception): Call fail() instead of print.
+
+2009-06-03  Jaroslav Hajek  <highegg@gmail.com>
+
+	* pytave.cc (delvar): New function.
+	* package/pytave.py (_VariablesDict.__delitem__): New method.
+
+2009-06-03  Jaroslav Hajek  <highegg@gmail.com>
+
+	* pytave.cc (isvar): Fix tests.
+
+2009-06-08  Jaroslav Hajek  <highegg@gmail.com>, David Grundberg  <individ@acc.umu.se>
+
+	* octave_to_python.cc (copy_octarray_to_pyarrobj<PyObject *,
+	Cell>): New template specialization.
+	(createPyArr): Simplify row vectors to 1D arrays.
+	(octvalue_to_pyarrobj): Add string and cell cases.
+	(octcell_to_pyobject): Create a PyObject array if not row vector.
+	(octmap_to_pyobject): Create a simple dict if scalar struct.
+	(octvalue_to_pyobj): Allow converting arbitrary character matrices.
+	* python_to_octave.cc (pydict_to_octmap): Make scalar structs by
+	default, detect matching dimensions.
+	* package/pytave.py (feval): Update doc string.
+	(getvar, setvar, isvar): Remove.
+	(_VariablesDict): New class.
+	(locals, globals): Default instances.
+	(_local_scope): Rename to _LocalScope
+	* test/test.py: New tests. Update old tests.
+	(testsetget, testexception): New functions.
+
+2009-06-03  Jaroslav Hajek  <highegg@gmail.com>
+
+	* python_to_octave.cc (copy_pyarrobj_to_octarray<PyObject *,
+	Cell>): New template specialization.
+	(matching_type<PyObject *, octave_value>): Ditto.
+	(copy_pyarrobj_to_octarray_boot): Include PyArray_CHAR
+	and PyArray_Object cases.
+	(pyarr_to_octvalue): Likewise.
+	* test/test.py: Add tests for the new conversions.
+
+2009-06-03  David Grundberg  <individ@acc.umu.se>
+
+	* octave_to_python.cc (create_uint_array, create_sint_array):
+	Prefer int to other datatypes of identical size.
+	(is_1xn_or_0x0): Whitespace.
+	* python_to_octave.cc (copy_pyarrobj_to_octarray_dispatch): Prefer
+	int to other datatypes of identical size.
+
+2009-05-28  Jaroslav Hajek  <highegg@gmail.com>
+
+	* configure.ac: Remove --enable-float-matrices option.
+	* octave_to_python.cc: Remove uses of PYTAVE_USE_OCTAVE_FLOAT.
+	* python_to_octave.cc: Ditto.
+
+2009-05-26  Jaroslav Hajek  <highegg@gmail.com>
+
+	* octave_to_python.cc (octvalue_to_pyarrobj): Support Complex
+	and FloatComplex values.
+	(octvalue_to_pyobj): Support complex scalars.
+	* python_to_octave.cc (copy_pyarrobj_to_octarray_dispatch):
+	New template function.
+	(matching_type): New helper traits class.
+	(copy_pyarrobj_to_octarray_dispatch): Support complex types.
+	(pyarrobj_to_octvalue): Support complex scalars.
+	* test/test.py: Add tests for complex values.
+
+2009-05-26  Jaroslav Hajek  <highegg@gmail.com>
+
+	* octave_to_python.cc: New #include (boost/type_traits).
+	(copy_octarray_to_pyarrobj): Don't use .value(); don't	specialize.
+	(create_array (..., boost::true_type)): New overload (forward).
+	(create_array (..., boost::false_type)): New overload (dummy).
+	(create_uint_array): Pick proper overload.
+	(create_sint_array): Pick proper overload.
+
+2009-05-25  Jaroslav Hajek  <highegg@gmail.com>
+
+	* python_to_octave.cc (pydict_to_octmap): Save key and val in an
+	array, to avoid doing duplicate conversions.
+
+2009-05-25  Jaroslav Hajek  <highegg@gmail.com>
+
+	* pytave.cc (init): Add parameter; only display Octave banner if
+	requested.
+	* package/pytave.cc: Determine whether the interpreter is
+	interactive.
+
+2009-05-25  Jaroslav Hajek  <highegg@gmail.com>
+
+	* octave_to_python.cc (is_1xn_or_0x0): New inline func.
+	(octcell_to_pyobject): Use it.
+	(octvalue_to_pyobj): Use it.
+	* test/test.py: Update & fix tests.
+
+2009-05-13  Jaroslav Hajek  <highegg@gmail.com>
+
+	* exceptions.h (variable_name_exception): New exception class.
+	* exceptions.cc: Initialize it.
+	* octave_to_python.h (octvalue_to_pyobj): Declare prototype.
+	* pytave.cc (init): Init variable_name_exception.
+	(getvar): New function.
+	(setvar): New function.
+	(isvar): New function.
+	(push_scope): New function.
+	(pop_scope): New function.
+	* package/pytave.py (__init__): Init VarNameError.
+	(getvar): New function.
+	(setvar): New function.
+	(isvar): New function.
+	(push_scope): New function.
+	(pop_scope): New function.
+	(_local_scope): New decorator helper class.
+	(local_scope): New decorator.
+	* test/test.py: Include new tests.
+
 2009-05-09  David Grundberg  <individ@acc.umu.se>
 
 	* ax_octave_float.m4: New file.

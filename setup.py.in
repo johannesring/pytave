@@ -1,8 +1,20 @@
-#!/usr/bin/python
+#!@PYTHON@
 # -*- coding: utf-8; c-basic-offset: 3; indent-tabs-mode: nil; tab-width: 3; -*-
 # @configure_input@
 
-from distutils.core import setup, Extension
+from distutils.core import setup, Extension, DistutilsModuleError
+
+include_dirs = ['/usr/local/include/octave-3.1.55', 
+	        '/home/hajek/devel/pytave-repo/pytave', '.'] # Python always included.
+
+# check for numpy. If it exists, define the path.
+
+if '@pytave_enable_numpy@' == 'yes':
+    try:
+        from numpy import get_include
+        include_dirs.append(get_include())
+    except ImportError:
+        raise DistutilsModuleError("could not found numpy")
 
 setup(
    name = 'pytave',
@@ -31,8 +43,8 @@ setup(
          
          # TODO: Check whether paths work on Windows or not.
          # The file separator might be wrong. (Must be / in setup.cfg)
-         include_dirs = ['@OCTAVE_INCLUDEDIR@', '@abs_builddir@', '@srcdir@'], # Python always included.
-         define_macros = [('HAVE_CONFIG_H', '1')],
+         include_dirs = include_dirs,
+	 define_macros = [('HAVE_CONFIG_H', '1')],
          library_dirs = ['@OCTAVE_LIBRARYDIR@'],
          runtime_library_dirs = ['@PYTAVE_OCTAVE_RPATH@'],
          libraries = ['octinterp', 'octave', 'cruft', '@BOOST_PYTHON_LIB@']

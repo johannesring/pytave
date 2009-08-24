@@ -1,5 +1,6 @@
 /*
  *  Copyright 2008 David Grundberg, Håkan Fors Nilsson
+ *  Copyright 2009 Jaroslav Hajek, VZLU Prague
  *
  *  This file is part of Pytave.
  *
@@ -23,33 +24,49 @@
 #include <boost/python/numeric.hpp>
 
 #undef HAVE_STAT /* Both boost.python and octave define HAVE_STAT... */
+#undef HAVE_FSTAT /* Both boost.python and octave define HAVE_FSTAT... */
 #include <octave/oct.h>
+
 #include <octave/oct-map.h>
 #include <octave/octave.h>
 #include <octave/ov.h>
 #include <octave/parse.h>
+#include <octave/symtab.h>
+#include <octave/toplev.h>
+#include <octave/utils.h>
 
 #include <iostream>
+#ifdef HAVE_USELOCALE
+#include <locale.h>
+#endif
 #include <sstream>
 #include <sys/types.h>
 
 #include "pytavedefs.h"
 
 #include "exceptions.h"
-#include "python_to_octave.h"
 #include "octave_to_python.h"
+#include "python_to_octave.h"
 
 using namespace boost::python;
 using namespace std;
 
-namespace pytave { /* {{{ */ 
+namespace pytave { /* {{{ */
 
-   void init() {
+#ifdef HAVE_USELOCALE
+   locale_t c_locale;
+#endif
+
+   void init(bool silent = true) {
+#ifdef HAVE_USELOCALE
+      c_locale = newlocale(LC_ALL, "C", 0);
+#endif
 
       if (!octave_error_exception::init()
           || !value_convert_exception::init()
           || !object_convert_exception::init()
-          || !octave_parse_exception::init()) {
+          || !octave_parse_exception::init()
+          || !variable_name_exception::init ()) {
          PyErr_SetString(PyExc_ImportError, "_pytave: init failed");
          return;
       }
@@ -59,14 +76,39 @@ namespace pytave { /* {{{ */
       const char* argv[] = {"octave",
                             "--no-line-editing",
                             "--no-history",
+                            "--silent",
                             NULL};
-      octave_main(3, const_cast<char**>(argv), 1);
+      int argc = 4;
+
+      if (silent) {
+         argv[3] = 0;
+         argc = 3;
+      }
+
+#ifdef HAVE_USELOCALE
+      // Set C locale
+      locale_t old_locale = uselocale(c_locale);
+#endif
+
+      octave_main(argc, const_cast<char**>(argv), 1);
+
+#ifdef HAVE_USELOCALE
+      // Reset locale
+      uselocale(old_locale);
+#endif
 
       // Initialize Python Numeric Array
 
       // This is actually a macro that becomes a block expression. If an error
       // occurs, e.g. Numeric Array not installed, an exception is set.
       import_array()
+#ifdef HAVE_NUMPY
+      numeric::array::set_module_and_type ("numpy", "ndarray");
+#endif
+   }
+
+   string get_module_name () {
+      return numeric::array::get_module_name ();
    }
 
    boost::python::tuple get_exceptions() {
@@ -77,7 +119,9 @@ namespace pytave { /* {{{ */
                         object(handle<PyObject>(
                                   object_convert_exception::excclass)),
                         object(handle<PyObject>(
-                                  octave_parse_exception::excclass)));
+                                  octave_parse_exception::excclass)),
+                        object(handle<PyObject>(
+                                  variable_name_exception::excclass)));
    }
 
    string make_error_message (const Octave_map& map) {
@@ -111,7 +155,6 @@ namespace pytave { /* {{{ */
       return exceptionmsg.str ();
    }
 
-     
    boost::python::tuple func_eval(const int nargout,
                                   const string &funcname,
                                   const boost::python::tuple &arguments) {
@@ -122,10 +165,23 @@ namespace pytave { /* {{{ */
 
       reset_error_handler();
       buffer_error_messages++;
-      
+
+      // Updating the timestamp makes Octave reread changed files
+      Vlast_prompt_time.stamp();
+
+#ifdef HAVE_USELOCALE
+      // Set C locale
+      locale_t old_locale = uselocale(c_locale);
+#endif
+
       Py_BEGIN_ALLOW_THREADS
       retval = feval(funcname, octave_args, (nargout >= 0) ? nargout : 0);
       Py_END_ALLOW_THREADS
+
+#ifdef HAVE_USELOCALE
+      // Reset locale
+      uselocale(old_locale);
+#endif
 
       if (error_state != 0) {
 // error_state values:
@@ -162,11 +218,24 @@ namespace pytave { /* {{{ */
 
       reset_error_handler();
       buffer_error_messages++;
-      
+
+      // Updating the timestamp makes Octave reread changed files
+      Vlast_prompt_time.stamp();
+
+#ifdef HAVE_USELOCALE
+      // Set C locale
+      locale_t old_locale = uselocale(c_locale);
+#endif
+
       Py_BEGIN_ALLOW_THREADS
       retval = eval_string(code, silent, parse_status,
          (nargout >= 0) ? nargout : 0);
       Py_END_ALLOW_THREADS
+
+#ifdef HAVE_USELOCALE
+      // Reset locale
+      uselocale(old_locale);
+#endif
 
       if (parse_status != 0 || error_state != 0) {
 // error_state values:
@@ -197,14 +266,122 @@ namespace pytave { /* {{{ */
          return make_tuple();
       }
    }
+
+   boost::python::object getvar(const string& name,
+                                bool global) {
+      octave_value val;
+
+      if (global)
+         val = symbol_table::global_varval(name);
+      else
+         val = symbol_table::varval(name);
+
+      if (val.is_undefined()) {
+         throw variable_name_exception (name + " not defined in current scope");
+      }
+
+      boost::python::object pyobject;
+      octvalue_to_pyobj(pyobject, val);
+
+      return pyobject;
+   }
+
+   void setvar(const string& name, 
+               const boost::python::object& pyobject,
+               bool global) {
+      octave_value val;
+
+      if (!valid_identifier(name)) {
+         throw variable_name_exception (name + " is not a valid identifier");
+      }
+
+      pyobj_to_octvalue(val, pyobject);
+
+      if (global)
+         symbol_table::global_varref(name) = val;
+      else
+         symbol_table::varref(name) = val;
+   }
+
+   bool isvar(const string& name, bool global) {
+      bool retval;
+
+      if (global)
+         retval = symbol_table::global_varval (name).is_defined ();
+      else
+         retval = symbol_table::is_variable (name);
+
+      return retval;
+   }
+
+   void delvar(const string& name, bool global) {
+
+      if (global) {
+
+         // FIXME: workaround a bug in Octave 3.2.0.
+         if (! symbol_table::is_global (name))
+            symbol_table::insert (name).mark_global ();
+
+         symbol_table::clear_global (name);
+      } else
+         symbol_table::clear_variable (name);
+   }
+
+   int push_scope() {
+      symbol_table::scope_id local_scope = symbol_table::alloc_scope();
+      symbol_table::set_scope(local_scope);
+      octave_call_stack::push(local_scope);
+      return local_scope;
+   }
+
+   void pop_scope () {
+      symbol_table::scope_id curr_scope = symbol_table::current_scope();
+      if (curr_scope != symbol_table::top_scope())
+         {
+            symbol_table::erase_scope(curr_scope);
+            octave_call_stack::pop();
+         }
+   }
+
+// Make sure Octave is correctly unloaded. We cannot depend on Octave running
+// at the (true) process atexit point, because at that time the Octave library
+// might have been unloaded.
+//
+// At least that is the hypothesis, since Octave (in certain circumstances)
+// cause a segmentation fault in do_octave_atexit called from the exit
+// function. (One Octave call that causes this is "sleep(0)".)
+   void atexit () {
+#ifdef HAVE_USELOCALE
+      // Set C locale
+      locale_t old_locale = uselocale(c_locale);
+#endif
+
+      Py_BEGIN_ALLOW_THREADS
+      do_octave_atexit();
+      Py_END_ALLOW_THREADS
+
+#ifdef HAVE_USELOCALE
+      // Reset locale
+      uselocale(old_locale);
+#endif
+   }
+
 } /* namespace pytave }}} */
 
 BOOST_PYTHON_MODULE(_pytave) { /* {{{ */
    using namespace boost::python;
 
    def("init", pytave::init);
+   def("get_module_name", pytave::get_module_name);
    def("feval", pytave::func_eval);
    def("eval", pytave::str_eval);
+   def("getvar", pytave::getvar);
+   def("setvar", pytave::setvar);
+   def("isvar", pytave::isvar);
+   def("delvar", pytave::delvar);
+   def("push_scope", pytave::push_scope);
+   def("pop_scope", pytave::pop_scope);
+   def("atexit", pytave::atexit);
    def("get_exceptions", pytave::get_exceptions);
 
    register_exception_translator<pytave::pytave_exception>(
@@ -221,6 +398,9 @@ BOOST_PYTHON_MODULE(_pytave) { /* {{{ */
 
    register_exception_translator<pytave::value_convert_exception>(
       pytave::value_convert_exception::translate_exception);
+
+   register_exception_translator<pytave::variable_name_exception>(
+      pytave::variable_name_exception::translate_exception);
 
 } /* }}} */
 
