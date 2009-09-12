@@ -20,20 +20,29 @@ AC_PRESERVE_HELP_ORDER
 AC_ARG_ENABLE(numpy,
 	      [AS_HELP_STRING([--enable-numpy],
 			      [use NumPy module (experimental)
-			      @<:@default=no@:>@])],
+			      @<:@default=check@:>@])],
 			      [pytave_enable_numpy="$enableval"],
-			      [pytave_enable_numpy=no]) dnl TODO: Check?
+			      [pytave_enable_numpy=check])
  
-if test "$pytave_enable_numpy" == "yes" ; then
-	AC_DEFINE([HAVE_NUMPY], 1, [Define if using NumPy])
-fi
-
 pytave_libs_ok=
 
-AX_OCTAVE([], [], [pytave_libs_ok=no])
+AX_OCTAVE([OCTAVE_CONFIG], [], [pytave_libs_ok=no])
 
 # Pick a Python library to use
 AX_PYTHON_DEVEL([], [], [pytave_libs_ok=no])
+
+AS_IF(test "x$pytave_enable_numpy" != "xno",
+[
+   AX_PYTHON_NUMPY(
+   [
+       AC_DEFINE([HAVE_NUMPY], 1, [Define if using NumPy])
+       pytave_enable_numpy=yes
+   ],
+   [
+       AS_IF(test "x$pytave_enable_numpy" == "xyes", [pytave_libs_ok=no])
+       pytave_enable_numpy='not found'
+   ])
+])
 
 # Look for boost::python
 pytave_old_libs="$LIBS"
@@ -48,17 +57,6 @@ AX_BOOST_PYTHON([], [pytave_libs_ok=no])
 LIBS="$pytave_old_libs"
 LDFLAGS="$pytave_old_ldflags"
 CPPFLAGS="$pytave_old_cppflags"
-
-# Now check the libs, if they have problems, halt.
-AS_IF(test -n "$pytave_libs_ok",
-[
-   AC_MSG_ERROR([
-========================================================================
-One or more library dependencies could not be resolved.
-
-Configuration failed. Halt.
-========================================================================])
-])
 
 # Do some more initializations
 
@@ -107,7 +105,6 @@ AS_IF(test "x${prefix}" == "xNONE",
 PYTAVE_OCTAVE_RPATH="$OCTAVE_LIBRARYDIR"
 AC_SUBST(PYTAVE_OCTAVE_RPATH)
 AC_SUBST(PYTAVE_MODULE_INSTALL_PATH)
-AC_SUBST(pytave_enable_numpy)
 
 # Substitutes for the Jamfile. XXX: Replace lib*.so with OS independent name.
 AC_SUBST(JAM_LIBOCTAVE, $OCTAVE_LIBRARYDIR/liboctave.so)
@@ -117,14 +114,22 @@ AC_SUBST(JAM_LIBOCTINTERP, $OCTAVE_LIBRARYDIR/liboctinterp.so)
 # setup.py
 AC_SUBST(PYTHON)
 
+msg='One or more library dependencies could not be resolved.
+
+Configuration failed. Halt.'
+
+AS_IF(test -z "$pytave_libs_ok",
+[
 # Substitute in these files, copy project-root.jam to VPATH too
 AC_OUTPUT([Makefile Jamfile setup.py project-root.jam])
 
 chmod u+x "setup.py"
+msg='Pytave is configured with the following setup'
+])
 
 AC_MSG_NOTICE([
 ========================================================================
-Pytave now configured with the following setup:
+$msg
 
 Dependencies
   Octave ............. $OCTAVE_INCLUDEDIR
@@ -136,3 +141,8 @@ Features
   uselocale .......... $pytave_have_uselocale
 
 ========================================================================])
+
+AS_IF(test -n "$pytave_libs_ok",
+[
+	AC_MSG_ERROR([[Configuration failure. Halt.]])
+])

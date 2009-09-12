@@ -77,7 +77,7 @@ AC_DEFUN([AX_OCTAVE],[
 	OCTAVE_CPPFLAGS=
 	OCTAVE_INCLUDEDIR=
 	OCTAVE_LIBRARYDIR=
-	ax_octave_config="$1"
+	ax_octave_config="[$]$1"
 	ax_octave_ok=
 
 	AC_MSG_CHECKING([for octave-config filename])

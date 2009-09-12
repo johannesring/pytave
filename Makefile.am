@@ -4,7 +4,7 @@ EXTRA_DIST = test/test.py test/exceptions.py testfile.m project-root.jam \
 package/__init__.py package/pytave.py
 EXTRA_libdir = @PYTAVE_MODULE_INSTALL_PATH@
 
-_pytave_la_CPPFLAGS = @OCTAVE_CPPFLAGS@ @PYTHON_CPPFLAGS@
+_pytave_la_CPPFLAGS = @OCTAVE_CPPFLAGS@ @PYTHON_CPPFLAGS@ -I@NUMPY_INCLUDEDIR@
 
 # Having -module in LDFLAGS lets us use a non-standard library name 
 # (e.g. _pytave instead of libpytave)

@@ -103,6 +103,7 @@ namespace pytave { /* {{{ */
       // occurs, e.g. Numeric Array not installed, an exception is set.
       import_array()
 #ifdef HAVE_NUMPY
+      // Let boost use numpy
       numeric::array::set_module_and_type ("numpy", "ndarray");
 #endif
    }
