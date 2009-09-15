@@ -4,8 +4,7 @@
 
 from distutils.core import setup, Extension, DistutilsModuleError
 
-include_dirs = ['/usr/local/include/octave-3.1.55', 
-	        '/home/hajek/devel/pytave-repo/pytave', '.'] # Python always included.
+include_dirs = ['@OCTAVE_INCLUDEDIR@', '@abs_builddir@', '@srcdir@'] # Python always included.
 
 # check for numpy. If it exists, define the path.
 

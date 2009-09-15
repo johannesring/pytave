@@ -1,3 +1,10 @@
+2009-09-15  Jaroslav Hajek  <highegg@gmail.com>
+
+	* octave_to_python.cc: Move #include of arrayobjectdefs after
+	pytavedefs to ensure config.h is included.
+	* python_to_octave.cc: Ditto.
+	* setup.py.in: Undo leaked local paths.
+
 2009-07-03  David Grundberg  <individ@acc.umu.se>
 
 	* pytave.cc: Sorted includes.

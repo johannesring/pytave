@@ -21,7 +21,6 @@
 #include <iostream>
 #include <boost/python.hpp>
 #include <boost/python/numeric.hpp>
-#include "arrayobjectdefs.h"
 #include <boost/type_traits/integral_constant.hpp>
 #undef HAVE_STAT /* both boost.python and octave defines HAVE_STAT... */
 #include <octave/oct.h>
@@ -31,6 +30,7 @@
 #include <octave/ov.h>
 
 #include "pytavedefs.h"
+#include "arrayobjectdefs.h"
 #include "exceptions.h"
 
 using namespace std;

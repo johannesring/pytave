@@ -18,7 +18,6 @@
  *  along with Pytave.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "arrayobjectdefs.h"
 #include <boost/python.hpp>
 #include <boost/python/numeric.hpp>
 #include <boost/type_traits/integral_constant.hpp>
@@ -30,6 +29,7 @@
 
 #include <iostream>
 #include "pytavedefs.h"
+#include "arrayobjectdefs.h"
 #include "exceptions.h"
 #include "octave_to_python.h"
 
