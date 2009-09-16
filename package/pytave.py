@@ -232,6 +232,14 @@ def path(*paths):
 	"""See Octave documentation"""
 	return _pytave.feval(1, "path", paths)[0]
 
+def load_package(pkg_name):
+    """Equivalent to pkg load. See Octave documentation."""
+    return _pytave.feval(0, "pkg", ("load", pkg_name))
+
+def unload_package(pkg_name):
+    """Equivalent to pkg unload. See Octave documentation."""
+    return _pytave.feval(0, "pkg", ("unload", pkg_name))
+
 class _VariablesDict(UserDict.DictMixin):
 	def __init__(self, global_variables, native=False):
 		self.global_variables = global_variables

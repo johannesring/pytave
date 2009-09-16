@@ -1,3 +1,9 @@
+2009-09-16  Jaroslav Hajek  <highegg@gmail.com>
+
+	* package/pytave.py (load_package, unload_package): New funcs.
+	* octave_to_python.cc: Workaround for return values bug in 
+	Octave <= 3.2.3.
+
 2009-09-15  Jaroslav Hajek  <highegg@gmail.com>
 
 	* octave_to_python.cc: Move #include of arrayobjectdefs after
