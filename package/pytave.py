@@ -187,13 +187,21 @@ def simplify(obj):
     1xN and 0x0 character arrays to strings, 1xN, Nx1 and 0x0 cell
     arrays to lists, and strip scalar dicts. It will work recursively."""
 
+    def get_typecode(array):
+	"""gets the typecode from both Numeric and NumPy array"""
+	try:
+	    tc = array.typecode
+	except:
+	    tc = array.dtype.char
+	return tc
+
     def vectordims(dims,column_allowed = True):
 	return (len(dims) == 2 and 
 		((dims[0] == 1 or (column_allowed and dims[1] == 1)) or
 		(dims[0] == 0 and dims[1] == 0)))
 
     if isinstance(obj,Numeric.ArrayType):
-	tc = obj.typecode()
+	tc = get_typecode(obj)
 	if tc == 'O':
 	    if vectordims(Numeric.shape(obj)):
 		return map(simplify,narrowlist(obj))
@@ -203,7 +211,7 @@ def simplify(obj):
 	else:
 	    dims = Numeric.shape(obj)
 	    if dims == (1,1):
-		return obj.toscalar()
+		return obj[0,0]
 	    elif vectordims(dims):
 		return Numeric.ravel(obj)
     elif isinstance(obj,dict):
