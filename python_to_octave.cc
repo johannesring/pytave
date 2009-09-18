@@ -56,6 +56,8 @@ namespace pytave {
                = *(PythonPrimitive*)
                &ptr[offset + i*pyarr->strides[dimension]];
          }
+      } else if (pyarr->nd == 0) {
+         matrix.elem(0) = *(PythonPrimitive*) ptr;
       } else {
          for (int i = 0; i < pyarr->dimensions[dimension]; i++) {
             copy_pyarrobj_to_octarray<PythonPrimitive, OctaveBase>(
@@ -85,6 +87,10 @@ namespace pytave {
             pyobj_to_octvalue (matrix.elem(matindex + i*matstride), 
                                object(handle<PyObject> (borrowed (pobj))));
          }
+      } else if (pyarr->nd == 0) {
+            PyObject *pobj = *(PyObject **) ptr;
+            pyobj_to_octvalue (matrix.elem(0), 
+                               object(handle<PyObject> (borrowed (pobj))));
       } else {
          for (int i = 0; i < pyarr->dimensions[dimension]; i++) {
             copy_pyarrobj_to_octarray<PyObject *, Cell>(
@@ -204,10 +210,11 @@ namespace pytave {
 
    static void pyarr_to_octvalue(octave_value &octvalue,
                                  const PyArrayObject *pyarr) {
-      if (pyarr->nd < 1)
-         throw object_convert_exception("Less than 1 dimensions not supported");
       dim_vector dims;
       switch (pyarr->nd) {
+         case 0:
+            dims = dim_vector (1, 1);
+            break;
          case 1:
             // Always make PyArray vectors row vectors.
             dims = dim_vector(1, pyarr->dimensions[0]);
