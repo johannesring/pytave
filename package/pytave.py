@@ -26,7 +26,13 @@ import atexit
 import sys
 
 arg0 = sys.argv[0]
-interactive = sys.stdin.isatty() and (arg0 == '' or arg0 == '-')
+# Some web application packages, such as mod_wsgi for Apache,
+# completely restrict access to stdin, including an isatty() query.
+# Hence, if an error occurs, we'll stay safe.
+try:
+    interactive = sys.stdin.isatty() and (arg0 == '' or arg0 == '-')
+except IOError:
+    interactive = False
 
 _pytave.init(interactive)
 (OctaveError, ValueConvertError, ObjectConvertError, ParseError, \
@@ -190,7 +196,7 @@ def simplify(obj):
     def get_typecode(array):
 	"""gets the typecode from both Numeric and NumPy array"""
 	try:
-	    tc = array.typecode
+	    tc = array.typecode()
 	except:
 	    tc = array.dtype.char
 	return tc

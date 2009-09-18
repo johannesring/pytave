@@ -1,4 +1,9 @@
 2009-09-18  Jaroslav Hajek  <highegg@gmail.com>
+
+	* package/pytave.py: Safer check for interactive (mod_wsgi in
+	Apache!)
+	
+2009-09-18  Jaroslav Hajek  <highegg@gmail.com>
 	
 	* python_to_octave.cc (copy_pyarrobj_to_octarray,
 	pyarr_to_octvalue): Support 0D case.
