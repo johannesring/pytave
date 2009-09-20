@@ -1,5 +1,8 @@
 # @configure_input@
 
+# Building with bjam is no longer supported - this script probably
+# does not work.
+
 project py : 
 	requirements 
 	<library>/usr/lib/lib@BOOST_PYTHON_LIB@.so  

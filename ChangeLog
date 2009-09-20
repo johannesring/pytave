@@ -1,3 +1,15 @@
+2009-09-20  David Grundberg  <individ@acc.umu.se>
+
+	* configure.ac: Look for NumPy. List which dependencies that are
+	missing.
+	* pytave.cc (init): One-line comment about NumPy.
+	* m4/ax_python_numpy.m4: New file.
+	* m4/ax_octave.m4: Send output variable by name.
+	* Makefile.am (_pytave_la_CPPFLAGS): Substitute NumPy include
+	directory from configuration.
+	* setup.py.in: Ditto.
+	* Jamfile.in: Add warning against using bjam.
+
 2009-09-18  Jaroslav Hajek  <highegg@gmail.com>
 
 	* package/pytave.py: Safer check for interactive (mod_wsgi in
