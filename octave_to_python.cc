@@ -18,7 +18,6 @@
  *  along with Pytave.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "arrayobjectdefs.h"
 #include <boost/python.hpp>
 #include <boost/python/numeric.hpp>
 #include <boost/type_traits/integral_constant.hpp>
@@ -30,6 +29,7 @@
 
 #include <iostream>
 #include "pytavedefs.h"
+#include "arrayobjectdefs.h"
 #include "exceptions.h"
 #include "octave_to_python.h"
 
@@ -306,6 +306,13 @@ namespace pytave {
                            const octave_value_list &octave_list) {
       boost::python::list seq;
       int length = octave_list.length();
+
+      // FIXME: due to bugs in Octave 3.2.3 and earlier, lists returned from
+      // eval_string and feval may be padded by trailing undefined values.
+      // Fix is already upstream, so this may be eventually removed.
+      while (length > 0 && octave_list(length-1).is_undefined())
+         length--;
+
       for (int i = 0; i < length; i++) {
          boost::python::object py_object;
          octvalue_to_pyobj(py_object, octave_list(i));

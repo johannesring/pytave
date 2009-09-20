@@ -26,7 +26,13 @@ import atexit
 import sys
 
 arg0 = sys.argv[0]
-interactive = sys.stdin.isatty() and (arg0 == '' or arg0 == '-')
+# Some web application packages, such as mod_wsgi for Apache,
+# completely restrict access to stdin, including an isatty() query.
+# Hence, if an error occurs, we'll stay safe.
+try:
+    interactive = sys.stdin.isatty() and (arg0 == '' or arg0 == '-')
+except IOError:
+    interactive = False
 
 _pytave.init(interactive)
 (OctaveError, ValueConvertError, ObjectConvertError, ParseError, \
@@ -187,13 +193,21 @@ def simplify(obj):
     1xN and 0x0 character arrays to strings, 1xN, Nx1 and 0x0 cell
     arrays to lists, and strip scalar dicts. It will work recursively."""
 
+    def get_typecode(array):
+	"""gets the typecode from both Numeric and NumPy array"""
+	try:
+	    tc = array.typecode()
+	except:
+	    tc = array.dtype.char
+	return tc
+
     def vectordims(dims,column_allowed = True):
 	return (len(dims) == 2 and 
 		((dims[0] == 1 or (column_allowed and dims[1] == 1)) or
 		(dims[0] == 0 and dims[1] == 0)))
 
     if isinstance(obj,Numeric.ArrayType):
-	tc = obj.typecode()
+	tc = get_typecode(obj)
 	if tc == 'O':
 	    if vectordims(Numeric.shape(obj)):
 		return map(simplify,narrowlist(obj))
@@ -203,7 +217,7 @@ def simplify(obj):
 	else:
 	    dims = Numeric.shape(obj)
 	    if dims == (1,1):
-		return obj.toscalar()
+		return obj[0,0]
 	    elif vectordims(dims):
 		return Numeric.ravel(obj)
     elif isinstance(obj,dict):
@@ -231,6 +245,14 @@ def rmpath(*paths):
 def path(*paths):
 	"""See Octave documentation"""
 	return _pytave.feval(1, "path", paths)[0]
+
+def load_package(pkg_name):
+    """Equivalent to pkg load. See Octave documentation."""
+    return _pytave.feval(0, "pkg", ("load", pkg_name))
+
+def unload_package(pkg_name):
+    """Equivalent to pkg unload. See Octave documentation."""
+    return _pytave.feval(0, "pkg", ("unload", pkg_name))
 
 class _VariablesDict(UserDict.DictMixin):
 	def __init__(self, global_variables, native=False):

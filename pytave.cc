@@ -18,8 +18,6 @@
  *  along with Pytave.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define PYTAVE_DO_DECLARE_SYMBOL
-#include "arrayobjectdefs.h"
 #include <boost/python.hpp>
 #include <boost/python/numeric.hpp>
 
@@ -44,6 +42,8 @@
 
 #include "pytavedefs.h"
 
+#define PYTAVE_DO_DECLARE_SYMBOL
+#include "arrayobjectdefs.h"
 #include "exceptions.h"
 #include "octave_to_python.h"
 #include "python_to_octave.h"
