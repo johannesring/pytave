@@ -23,13 +23,17 @@ AC_ARG_ENABLE(numpy,
 			      @<:@default=check@:>@])],
 			      [pytave_enable_numpy="$enableval"],
 			      [pytave_enable_numpy=check])
- 
-pytave_libs_ok=
 
-AX_OCTAVE([OCTAVE_CONFIG], [], [pytave_libs_ok=no])
+dnl Define a convenience m4 macro for appending to pytave_missing_libs
+define(addmissing,pytave_missing_libs="$1
+$pytave_missing_libs")
+pytave_missing_libs=
+
+# Find Octave
+AX_OCTAVE([OCTAVE_CONFIG], [], [addmissing([Octave development files])])
 
 # Pick a Python library to use
-AX_PYTHON_DEVEL([], [], [pytave_libs_ok=no])
+AX_PYTHON_DEVEL([], [], [addmissing([Python development files])])
 
 AS_IF(test "x$pytave_enable_numpy" != "xno",
 [
@@ -39,7 +43,7 @@ AS_IF(test "x$pytave_enable_numpy" != "xno",
        pytave_enable_numpy=yes
    ],
    [
-       AS_IF(test "x$pytave_enable_numpy" == "xyes", [pytave_libs_ok=no])
+       AS_IF(test "x$pytave_enable_numpy" == "xyes", [addmissing([NumPy development files])])
        pytave_enable_numpy='not found'
    ])
 ])
@@ -52,7 +56,7 @@ LIBS="$LIBS $PYTHON_LIBS"
 LDFLAGS="$LDFLAGS $PYTHON_LDFLAGS"
 CPPFLAGS="$CPPFLAGS $PYTHON_CPPFLAGS"
 
-AX_BOOST_PYTHON([], [pytave_libs_ok=no])
+AX_BOOST_PYTHON([], [addmissing([Boost Python development files])])
 
 LIBS="$pytave_old_libs"
 LDFLAGS="$pytave_old_ldflags"
@@ -114,11 +118,13 @@ AC_SUBST(JAM_LIBOCTINTERP, $OCTAVE_LIBRARYDIR/liboctinterp.so)
 # setup.py
 AC_SUBST(PYTHON)
 
-msg='One or more library dependencies could not be resolved.
+msg="One or more library dependencies could not be resolved.
 
-Configuration failed. Halt.'
+Missing dependencies:
+$pytave_missing_libs
+Configuration failed. Halt."
 
-AS_IF(test -z "$pytave_libs_ok",
+AS_IF(test -z "$pytave_missing_libs",
 [
 # Substitute in these files, copy project-root.jam to VPATH too
 AC_OUTPUT([Makefile Jamfile setup.py project-root.jam])
@@ -135,6 +141,7 @@ Dependencies
   Octave ............. $OCTAVE_INCLUDEDIR
   Python ............. $PYTHON_CPPFLAGS
     executable ....... $PYTHON
+  Python boost ....... $BOOST_PYTHON_LIB
 
 Features
   NumPy .............. $pytave_enable_numpy
@@ -142,7 +149,7 @@ Features
 
 ========================================================================])
 
-AS_IF(test -n "$pytave_libs_ok",
+AS_IF(test -n "$pytave_missing_libs",
 [
 	AC_MSG_ERROR([[Configuration failure. Halt.]])
 ])
