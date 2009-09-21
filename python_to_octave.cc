@@ -187,6 +187,7 @@ namespace pytave {
 
 #ifdef HAVE_NUMPY
          ARRAYCASE(PyArray_BOOL, bool)
+         ARRAYCASE(PyArray_STRING, char)
 #endif
 
          ARRAYCASE(PyArray_OBJECT, PyObject *)
@@ -209,7 +210,7 @@ namespace pytave {
    }
 
    static void pyarr_to_octvalue(octave_value &octvalue,
-                                 const PyArrayObject *pyarr) {
+                                 PyArrayObject *pyarr) {
       dim_vector dims;
       switch (pyarr->nd) {
          case 0:
@@ -278,6 +279,7 @@ namespace pytave {
             pyarrobj_to_octvalueNd<ComplexNDArray>(octvalue, pyarr, dims);
             break;
          case PyArray_CHAR:
+         case_PyArray_CHAR:
             pyarrobj_to_octvalueNd<charNDArray>(octvalue, pyarr, dims);
             // FIXME: is the following needed?
             octvalue = octvalue.convert_to_str(true, true, '"');
@@ -285,6 +287,22 @@ namespace pytave {
 #ifdef HAVE_NUMPY
          case PyArray_BOOL:
             pyarrobj_to_octvalueNd<boolNDArray>(octvalue, pyarr, dims);
+            break;
+         case PyArray_STRING:
+            {
+               if (pyarr->descr->elsize == 1)
+                  goto case_PyArray_CHAR;
+               else {
+                  // Create a new descriptor of the data.
+                  PyArray_Descr *view_descr = PyArray_DescrFromType(PyArray_CHAR);
+                  // Create a new view of the NumPy array.
+                  PyArrayObject *view = (PyArrayObject *)PyArray_View (pyarr, view_descr, NULL);
+                  // Store in a handle to ensure proper destruction.
+                  handle<PyObject> view_handle (allow_null ((PyObject *)view));
+                  // Call recursively.
+                  pyarr_to_octvalue (octvalue, view);
+               }
+            }
             break;
 #endif
          case PyArray_OBJECT:
