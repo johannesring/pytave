@@ -17,12 +17,19 @@ AC_CONFIG_HEADER([config.h])
 
 AC_PRESERVE_HELP_ORDER
 
-AC_ARG_ENABLE(numpy,
-	      [AS_HELP_STRING([--enable-numpy],
+AC_ARG_WITH(numpy,
+	      [AS_HELP_STRING([--with-numpy],
 			      [use NumPy module (experimental)
-			      @<:@default=check@:>@])],
+			      @<:@default=yes@:>@])],
 			      [pytave_enable_numpy="$enableval"],
-			      [pytave_enable_numpy=check])
+			      [pytave_enable_numpy=yes])
+
+AC_ARG_WITH(numeric,
+	      [AS_HELP_STRING([--with-numeric],
+			      [use legacy Numeric module. NumPy must be disabled.
+			      @<:@default=no@:>@])],
+			      [pytave_enable_numeric="$enableval"],
+			      [pytave_enable_numeric=no])
 
 dnl Define a convenience m4 macro for appending to pytave_missing_libs
 define(addmissing,pytave_missing_libs="$1
@@ -35,17 +42,35 @@ AX_OCTAVE([OCTAVE_CONFIG], [], [addmissing([Octave development files])])
 # Pick a Python library to use
 AX_PYTHON_DEVEL([], [], [addmissing([Python development files])])
 
-AS_IF(test "x$pytave_enable_numpy" != "xno",
+# Check for bad arguments.
+AS_IF(test "x$pytave_enable_numpy" == "xyes" -a "x$pytave_enable_numeric" == "xyes" -o dnl
+"x$pytave_enable_numpy" == "xno" -a "x$pytave_enable_numeric" == "xno", 
+[
+	AC_ERROR([NumPy or Numeric: select one.])
+])
+
+# Select Python matrix interface, prefer numpy.
+AS_IF(test "x$pytave_enable_numpy" == "xno",
+[
+	pytave_matrix_interface="numeric"
+],
+[
+	pytave_matrix_interface="numpy"
+])
+
+# Look for selected matrix interface
+AS_IF(test "$pytave_matrix_interace" == "numpy",
 [
    AX_PYTHON_NUMPY(
    [
        AC_DEFINE([HAVE_NUMPY], 1, [Define if using NumPy])
-       pytave_enable_numpy=yes
    ],
    [
-       AS_IF(test "x$pytave_enable_numpy" == "xyes", [addmissing([NumPy development files])])
-       pytave_enable_numpy='not found'
+       addmissing([NumPy development files])
    ])
+],
+[
+   AX_PYTHON_NUMERIC([], [addmissing([Numeric development files])])
 ])
 
 # Look for boost::python
@@ -144,7 +169,7 @@ Dependencies
   Python boost ....... $BOOST_PYTHON_LIB
 
 Features
-  NumPy .............. $pytave_enable_numpy
+  matrix interface ... $pytave_matrix_interface
   uselocale .......... $pytave_have_uselocale
 
 ========================================================================])

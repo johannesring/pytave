@@ -1,5 +1,12 @@
 2009-09-24  David Grundberg  <individ@acc.umu.se>
 
+	* configure.ac: Make NumPy default. Replace --enable flags with
+	--with-type flags. Rework output. 
+	* m4/ax_python_numeric.m4 (AX_PYTHON_NUMERIC): Check for Numeric
+	extentions for Python.
+
+2009-09-24  David Grundberg  <individ@acc.umu.se>
+
 	* m4/ax_python_numpy.m4 (AX_PYTHON_NUMPY): Restore CPPFLAGS.
 
 2009-09-20  David Grundberg  <individ@acc.umu.se>
