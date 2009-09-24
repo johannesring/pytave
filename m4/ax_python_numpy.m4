@@ -6,13 +6,6 @@
 #
 #   AX_PYTHON_NUMPY([ACTION_IF_FOUND], [ACTION_IF_NOT_FOUND])
 #
-# DESCRIPTION
-#
-#
-# LAST MODIFICATION
-#
-#   2009-08024
-#
 # COPYING
 #
 #   Copyright (c) 2009 David Grundberg
@@ -92,7 +85,7 @@ except:
 				[[ &PyArray_FromDims; ]]),
 				[ax_python_numpy_cv_check=yes],
 				[ax_python_numpy_cv_check=no])
-			CPPFLAGS="$ax_python_numpy_old_cppflags"
+			CPPFLAGS="$ax_python_numpy_cppflags"
 			LDFLAGS="$ax_python_numpy_ldflags"
 			
 			AC_LANG_POP([C++])
