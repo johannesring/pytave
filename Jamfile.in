@@ -1,12 +1,15 @@
 # @configure_input@
 
+# Building with bjam is no longer supported - this script probably
+# does not work.
+
 project py : 
 	requirements 
 	<library>/usr/lib/lib@BOOST_PYTHON_LIB@.so  
 	<library>@JAM_LIBOCTAVE@
 	<library>@JAM_LIBCRUFT@
 	<library>@JAM_LIBOCTINTERP@
-#	<include>@PYTHON_INCLUDE_DIR@
+#	<include>@PYTHON_INCLUDE_DIR@ # FIXME
 	<include>@OCTAVE_INCLUDEDIR@
 	<include>@abs_srcdir@
 	<include>@abs_builddir@

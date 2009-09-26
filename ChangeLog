@@ -1,3 +1,26 @@
+2009-09-26  David Grundberg  <individ@acc.umu.se>
+
+	* configure.ac: Make NumPy default. Replace --enable flags with
+	--with-type flags. Rework output.
+	* m4/ax_python_numeric.m4 (AX_PYTHON_NUMERIC): Check for Numeric
+	extentions for Python.
+
+2009-09-26  David Grundberg  <individ@acc.umu.se>
+
+	* m4/ax_python_numpy.m4 (AX_PYTHON_NUMPY): Restore CPPFLAGS.
+
+2009-09-26  David Grundberg  <individ@acc.umu.se>
+
+	* configure.ac: Look for NumPy. List which dependencies that are
+	missing.
+	* pytave.cc (init): One-line comment about NumPy.
+	* m4/ax_python_numpy.m4: New file.
+	* m4/ax_octave.m4: Send output variable by name.
+	* Makefile.am (_pytave_la_CPPFLAGS): Substitute NumPy include
+	directory from configuration.
+	* setup.py.in: Ditto.
+	* Jamfile.in: Add warning against using bjam.
+
 2009-09-21  Jaroslav Hajek  <highegg@gmail.com>
 
 	* python_to_octave.cc (copy_pyarrobj_to_octarray_boot,

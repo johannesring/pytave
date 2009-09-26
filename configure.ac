@@ -17,23 +17,61 @@ AC_CONFIG_HEADER([config.h])
 
 AC_PRESERVE_HELP_ORDER
 
-AC_ARG_ENABLE(numpy,
-	      [AS_HELP_STRING([--enable-numpy],
+AC_ARG_WITH(numpy,
+	      [AS_HELP_STRING([--with-numpy],
 			      [use NumPy module (experimental)
-			      @<:@default=no@:>@])],
+			      @<:@default=yes@:>@])],
 			      [pytave_enable_numpy="$enableval"],
-			      [pytave_enable_numpy=no]) dnl TODO: Check?
- 
-if test "$pytave_enable_numpy" == "yes" ; then
-	AC_DEFINE([HAVE_NUMPY], 1, [Define if using NumPy])
-fi
+			      [pytave_enable_numpy=yes])
 
-pytave_libs_ok=
+AC_ARG_WITH(numeric,
+	      [AS_HELP_STRING([--with-numeric],
+			      [use legacy Numeric module. NumPy must be disabled.
+			      @<:@default=no@:>@])],
+			      [pytave_enable_numeric="$enableval"],
+			      [pytave_enable_numeric=no])
 
-AX_OCTAVE([], [], [pytave_libs_ok=no])
+dnl Define a convenience m4 macro for appending to pytave_missing_libs
+define(addmissing,pytave_missing_libs="$1
+$pytave_missing_libs")
+pytave_missing_libs=
+
+# Find Octave
+AX_OCTAVE([OCTAVE_CONFIG], [], [addmissing([Octave development files])])
 
 # Pick a Python library to use
-AX_PYTHON_DEVEL([], [], [pytave_libs_ok=no])
+AX_PYTHON_DEVEL([], [], [addmissing([Python development files])])
+
+# Check for bad arguments.
+AS_IF(test "x$pytave_enable_numpy" == "xyes" -a "x$pytave_enable_numeric" == "xyes" -o dnl
+"x$pytave_enable_numpy" == "xno" -a "x$pytave_enable_numeric" == "xno", 
+[
+	AC_ERROR([NumPy or Numeric: select one.])
+])
+
+# Select Python matrix interface, prefer numpy.
+AS_IF(test "x$pytave_enable_numpy" == "xno",
+[
+	pytave_matrix_interface="numeric"
+],
+[
+	pytave_matrix_interface="numpy"
+])
+
+# Look for selected matrix interface
+AS_IF(test "$pytave_matrix_interace" == "numpy",
+[
+   AX_PYTHON_NUMPY(
+   [
+       AC_DEFINE([HAVE_NUMPY], 1, [Define if using NumPy])
+   ],
+   [
+       addmissing([NumPy development files])
+   ])
+],
+[
+   AX_PYTHON_NUMERIC([], [addmissing([Numeric development files])])
+])
 
 # Look for boost::python
 pytave_old_libs="$LIBS"
@@ -43,22 +81,11 @@ LIBS="$LIBS $PYTHON_LIBS"
 LDFLAGS="$LDFLAGS $PYTHON_LDFLAGS"
 CPPFLAGS="$CPPFLAGS $PYTHON_CPPFLAGS"
 
-AX_BOOST_PYTHON([], [pytave_libs_ok=no])
+AX_BOOST_PYTHON([], [addmissing([Boost Python development files])])
 
 LIBS="$pytave_old_libs"
 LDFLAGS="$pytave_old_ldflags"
 CPPFLAGS="$pytave_old_cppflags"
-
-# Now check the libs, if they have problems, halt.
-AS_IF(test -n "$pytave_libs_ok",
-[
-   AC_MSG_ERROR([
-========================================================================
-One or more library dependencies could not be resolved.
-
-Configuration failed. Halt.
-========================================================================])
-])
 
 # Do some more initializations
 
@@ -107,7 +134,6 @@ AS_IF(test "x${prefix}" == "xNONE",
 PYTAVE_OCTAVE_RPATH="$OCTAVE_LIBRARYDIR"
 AC_SUBST(PYTAVE_OCTAVE_RPATH)
 AC_SUBST(PYTAVE_MODULE_INSTALL_PATH)
-AC_SUBST(pytave_enable_numpy)
 
 # Substitutes for the Jamfile. XXX: Replace lib*.so with OS independent name.
 AC_SUBST(JAM_LIBOCTAVE, $OCTAVE_LIBRARYDIR/liboctave.so)
@@ -117,22 +143,38 @@ AC_SUBST(JAM_LIBOCTINTERP, $OCTAVE_LIBRARYDIR/liboctinterp.so)
 # setup.py
 AC_SUBST(PYTHON)
 
+msg="One or more library dependencies could not be resolved.
+
+Missing dependencies:
+$pytave_missing_libs
+Configuration failed. Halt."
+
+AS_IF(test -z "$pytave_missing_libs",
+[
 # Substitute in these files, copy project-root.jam to VPATH too
 AC_OUTPUT([Makefile Jamfile setup.py project-root.jam])
 
 chmod u+x "setup.py"
+msg='Pytave is configured with the following setup'
+])
 
 AC_MSG_NOTICE([
 ========================================================================
-Pytave now configured with the following setup:
+$msg
 
 Dependencies
   Octave ............. $OCTAVE_INCLUDEDIR
   Python ............. $PYTHON_CPPFLAGS
     executable ....... $PYTHON
+  Python boost ....... $BOOST_PYTHON_LIB
 
 Features
-  NumPy .............. $pytave_enable_numpy
+  matrix interface ... $pytave_matrix_interface
   uselocale .......... $pytave_have_uselocale
 
 ========================================================================])
+
+AS_IF(test -n "$pytave_missing_libs",
+[
+	AC_MSG_ERROR([[Configuration failure. Halt.]])
+])
