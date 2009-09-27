@@ -1,3 +1,7 @@
+2009-09-27  David Grundberg  <individ@acc.umu.se>
+
+	* configure.ac: Fix typo.
+
 2009-09-26  David Grundberg  <individ@acc.umu.se>
 
 	* configure.ac: Make NumPy default. Replace --enable flags with

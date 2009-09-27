@@ -59,7 +59,7 @@ AS_IF(test "x$pytave_enable_numpy" == "xno",
 ])
 
 # Look for selected matrix interface
-AS_IF(test "$pytave_matrix_interace" == "numpy",
+AS_IF(test "$pytave_matrix_interface" == "numpy",
 [
    AX_PYTHON_NUMPY(
    [
