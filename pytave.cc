@@ -175,8 +175,13 @@ namespace pytave { /* {{{ */
       locale_t old_locale = uselocale(c_locale);
 #endif
 
+      bool bad_alloc_state = false;
       Py_BEGIN_ALLOW_THREADS
-      retval = feval(funcname, octave_args, (nargout >= 0) ? nargout : 0);
+      try {
+         retval = feval(funcname, octave_args, (nargout >= 0) ? nargout : 0);
+      } catch (bad_alloc) {
+         bad_alloc_state = true;
+      }
       Py_END_ALLOW_THREADS
 
 #ifdef HAVE_USELOCALE
@@ -184,7 +189,10 @@ namespace pytave { /* {{{ */
       uselocale(old_locale);
 #endif
 
-      if (error_state != 0) {
+      if (bad_alloc_state)
+         throw bad_alloc (); // Translated to MemoryError by boost::python
+
+      else if (error_state != 0) {
 // error_state values:
 // -2 error without traceback
 // -1 traceback
@@ -228,15 +236,23 @@ namespace pytave { /* {{{ */
       locale_t old_locale = uselocale(c_locale);
 #endif
 
+      bool bad_alloc_state = false;
       Py_BEGIN_ALLOW_THREADS
-      retval = eval_string(code, silent, parse_status,
-         (nargout >= 0) ? nargout : 0);
+      try {
+         retval = eval_string(code, silent, parse_status,
+            (nargout >= 0) ? nargout : 0);
+      } catch (bad_alloc) {
+         bad_alloc_state = true;
+      }
       Py_END_ALLOW_THREADS
 
 #ifdef HAVE_USELOCALE
       // Reset locale
       uselocale(old_locale);
 #endif
+
+      if (bad_alloc_state)
+         throw bad_alloc (); // Translated to MemoryError by boost::python
 
       if (parse_status != 0 || error_state != 0) {
 // error_state values:
