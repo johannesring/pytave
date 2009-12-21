@@ -22,7 +22,7 @@ Building:
 Linked and tested with:
     Python 2.4
     Boost::Python 1.33
-    Octave 3.0.2
+    Octave 3.2
 
 Bootstraping from Bazaar trunk
 ==============================
