@@ -4,6 +4,27 @@
 AC_PREREQ(2.61)
 AC_INIT(pytave, 0.1.1, [[https://bugs.launchpad.net/pytave]])
 
+AC_ARG_WITH(numpy,
+	      [AS_HELP_STRING([--with-numpy],
+			      [use NumPy module (experimental)
+			      @<:@default=yes@:>@])],
+			      [pytave_enable_numpy="$withval"],
+			      [pytave_enable_numpy=yes])
+
+AC_ARG_WITH(numeric,
+	      [AS_HELP_STRING([--with-numeric],
+			      [use legacy Numeric module. NumPy must be disabled.
+			      @<:@default=no@:>@])],
+			      [pytave_enable_numeric="$withval"],
+			      [pytave_enable_numeric=no])
+
+# Check for bad arguments.
+AS_IF(test "x$pytave_enable_numpy" = "xyes" -a "x$pytave_enable_numeric" = "xyes" -o dnl
+"x$pytave_enable_numpy" = "xno" -a "x$pytave_enable_numeric" = "xno", 
+[
+	AC_ERROR([NumPy or Numeric: select one.])
+])
+
 # Some important programs.
 AC_LANG(C++)
 AC_PROG_CXX
@@ -14,22 +35,6 @@ AC_PROG_CC
 AC_CONFIG_MACRO_DIR(m4)
 AC_CONFIG_SRCDIR([pytave.cc])
 AC_CONFIG_HEADER([config.h])
-
-AC_PRESERVE_HELP_ORDER
-
-AC_ARG_WITH(numpy,
-	      [AS_HELP_STRING([--with-numpy],
-			      [use NumPy module (experimental)
-			      @<:@default=yes@:>@])],
-			      [pytave_enable_numpy="$enableval"],
-			      [pytave_enable_numpy=yes])
-
-AC_ARG_WITH(numeric,
-	      [AS_HELP_STRING([--with-numeric],
-			      [use legacy Numeric module. NumPy must be disabled.
-			      @<:@default=no@:>@])],
-			      [pytave_enable_numeric="$enableval"],
-			      [pytave_enable_numeric=no])
 
 dnl Define a convenience m4 macro for appending to pytave_missing_libs
 define(addmissing,pytave_missing_libs="$1
@@ -42,15 +47,8 @@ AX_OCTAVE([OCTAVE_CONFIG], [], [addmissing([Octave development files])])
 # Pick a Python library to use
 AX_PYTHON_DEVEL([], [], [addmissing([Python development files])])
 
-# Check for bad arguments.
-AS_IF(test "x$pytave_enable_numpy" == "xyes" -a "x$pytave_enable_numeric" == "xyes" -o dnl
-"x$pytave_enable_numpy" == "xno" -a "x$pytave_enable_numeric" == "xno", 
-[
-	AC_ERROR([NumPy or Numeric: select one.])
-])
-
 # Select Python matrix interface, prefer numpy.
-AS_IF(test "x$pytave_enable_numpy" == "xno",
+AS_IF(test "x$pytave_enable_numpy" = "xno",
 [
 	pytave_matrix_interface="numeric"
 ],
@@ -59,7 +57,7 @@ AS_IF(test "x$pytave_enable_numpy" == "xno",
 ])
 
 # Look for selected matrix interface
-AS_IF(test "$pytave_matrix_interface" == "numpy",
+AS_IF(test "$pytave_matrix_interface" = "numpy",
 [
    AX_PYTHON_NUMPY(
    [
@@ -173,6 +171,16 @@ Features
   uselocale .......... $pytave_have_uselocale
 
 ========================================================================])
+
+AS_IF(test "x$pytave_have_uselocale" = "xno",
+[
+	AC_MSG_WARN([This system doesn't have uselocale support.
+           The Octave interpreter will NOT work correctly in any
+           locale but the C (POSIX) locale.  Pytave would use the
+           uselocale function to work around this limitation.  Pytave
+           can be compiled without it but will only work correcly in C
+           (POSIX) locale.])
+])
 
 AS_IF(test -n "$pytave_missing_libs",
 [

@@ -133,11 +133,21 @@ This could be a sign that the Octave development package is missing.
 	])
 
 	AS_IF([test -z "$ax_octave_ok"], [
+		# After the 3.2 series, the include path ends with
+		# /octave, but that part we don't want.
+		AC_MSG_CHECKING([[if the include directory is 3.3+ style]])
+		if test -f "$OCTAVE_INCLUDEDIR/oct.h" ; then
+			OCTAVE_INCLUDEDIR="$OCTAVE_INCLUDEDIR/.."
+			AC_MSG_RESULT([yes])
+		else
+			AC_MSG_RESULT([no])
+		fi
+
 		OCTAVE_LDFLAGS="-L$OCTAVE_LIBRARYDIR"
 		OCTAVE_LIBS="-loctave -lcruft -loctinterp"
 		OCTAVE_CPPFLAGS="-I$OCTAVE_INCLUDEDIR"
 
-		AC_CACHE_CHECK([whether linking to Octave library works], [ax_octave_cv_lib_octave],
+		AC_CACHE_CHECK([whether linking to Octave works], [ax_octave_cv_lib_octave],
 		[
 			ax_octave_cv_lib_octave=no
 
@@ -146,9 +156,10 @@ This could be a sign that the Octave development package is missing.
 			ax_octave_old_ldflags="$LDFLAGS"
 			ax_octave_old_cppflags="$CPPFLAGS"
 			ax_octave_old_libs="$LIBS"
-			LDFLAGS="$OCTAVE_LDFLAGS $LDFLAGS"
-			CPPFLAGS="$OCTAVE_CPPFLAGS $CPPFLAGS"
-			LIBS="$OCTAVE_LIBS $LIBS"
+
+			LDFLAGS="$OCTAVE_LDFLAGS $ax_octave_old_ldflags"
+			CPPFLAGS="$OCTAVE_CPPFLAGS $ax_octave_old_cppflags"
+			LIBS="$OCTAVE_LIBS $ax_octave_old_libs"
 
 			AC_LANG_ASSERT(C++)
 			AC_LINK_IFELSE(
@@ -158,6 +169,7 @@ This could be a sign that the Octave development package is missing.
 				[[MatrixType()]]),
 				[ax_octave_cv_lib_octave=yes],
 				[ax_octave_cv_lib_octave=no])
+
 			LDFLAGS="$ax_octave_old_ldflags"
 			CPPFLAGS="$ax_octave_old_cppflags"
 			LIBS="$ax_octave_old_libs"

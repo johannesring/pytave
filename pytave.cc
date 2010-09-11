@@ -76,13 +76,14 @@ namespace pytave { /* {{{ */
       const char* argv[] = {"octave",
                             "--no-line-editing",
                             "--no-history",
+                            "--no-init-file",
                             "--silent",
                             NULL};
-      int argc = 4;
+      int argc = 5;
 
       if (silent) {
-         argv[3] = 0;
-         argc = 3;
+         argc--;
+         argv[argc] = 0;
       }
 
 #ifdef HAVE_USELOCALE
