@@ -33,8 +33,19 @@ Bootstraping from Bazaar trunk
 
   3. `./configure'
 
+Hints for Ubuntu 9.10
+=====================
+
+The boost library has changed name since previous versions.  You need
+to tell the Pytave configure script this, i.e.::
+
+   ./configure PYTHON_VERSION=2.6 --with-boost-python=boost_python-mt
+
 Autotools
 =========
+
+Autotools is the recommended development configurator, since it has
+the sanest dependency checking.
 
 The Autotools build system need not be installed to build the
 module. You need `make' and all library dependencies though.
@@ -49,6 +60,8 @@ module. You need `make' and all library dependencies though.
 
 BJam
 ====
+
+BJam is not recommended.
 
 BJam must be installed in order to build the module. You also need a
 proper `user-config.jam' file in your home directory.
@@ -68,6 +81,8 @@ using python : 2.5 ;
 
 Distutils
 =========
+
+Distutils is recommended only for package installation purposes.
 
   1. Create the `setup.py' file by typing `./configure'
 
@@ -130,8 +145,12 @@ Running test suite in build directory
 
 Read the instructions above, and start the script test/test.py.
 
-Installing with distutils
-=========================
+There are three known errors in the test suite.
+
+Installing
+==========
+
+Installation is done with distutils, not make install.
 
   1. Run `python setup.py install'
 
