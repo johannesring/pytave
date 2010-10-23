@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT(pytave, 0.1.1, [[https://bugs.launchpad.net/pytave]])
+AC_INIT(pytave, dev, [[https://bugs.launchpad.net/pytave]])
 
 AC_ARG_WITH(numpy,
 	      [AS_HELP_STRING([--with-numpy],

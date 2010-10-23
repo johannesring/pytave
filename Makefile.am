@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS = -I m4
 EXTRA_lib_LTLIBRARIES = _pytave.la
-EXTRA_DIST = test/test.py test/exceptions.py testfile.m project-root.jam \
+EXTRA_DIST = test/test.py test/exceptions.py project-root.jam \
 package/__init__.py package/pytave.py
 EXTRA_libdir = @PYTAVE_MODULE_INSTALL_PATH@
 
