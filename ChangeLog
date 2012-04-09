@@ -1,5 +1,10 @@
 2012-04-09  David Grundberg  <individ@acc.umu.se>
 
+	* octave_to_python.cc, python_to_octave.cc, pytave.cc: Undef
+	HAVE_STAT and HAVE_FSTAT consistently through-out all files.
+
+2012-04-09  David Grundberg  <individ@acc.umu.se>
+
 	* m4/ax_python_numpy.m4: Add missing link flags to test.
 
 2009-11-19  Jaroslav Hajek  <highegg@gmail.com>

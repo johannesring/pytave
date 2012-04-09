@@ -21,7 +21,13 @@
 #include <boost/python.hpp>
 #include <boost/python/numeric.hpp>
 #include <boost/type_traits/integral_constant.hpp>
-#undef HAVE_STAT /* both boost::python and octave define HAVE_STAT... */
+
+/* Both boost::python and octave define HAVE_STAT and HAVE_FSTAT.  Ideally,
+   they shouldn't expose their configuration in the header files, but they do.
+   This silences the compiler warning. */
+#undef HAVE_STAT
+#undef HAVE_FSTAT
+
 #include <octave/oct.h>
 #include <octave/Matrix.h>
 #include <octave/ov.h>
