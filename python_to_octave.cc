@@ -191,10 +191,8 @@ namespace pytave {
          /* Commonly Numeric.array(..., Numeric.Complex) */
          ARRAYCASE(PyArray_CDOUBLE, Complex)
 
-#ifdef HAVE_NUMPY
          ARRAYCASE(PyArray_BOOL, bool)
          ARRAYCASE(PyArray_STRING, char)
-#endif
 
          ARRAYCASE(PyArray_OBJECT, PyObject *)
 
@@ -290,12 +288,15 @@ namespace pytave {
             // FIXME: is the following needed?
             octvalue = octvalue.convert_to_str(true, true, '"');
             break;
-#ifdef HAVE_NUMPY
          case PyArray_BOOL:
+            // PyArray_BOOL is an NumPy-ism (was not part of origin Numeric
+            // interface.)
             pyarrobj_to_octvalueNd<boolNDArray>(octvalue, pyarr, dims);
             break;
          case PyArray_STRING:
             {
+               // PyArray_STRING is an NumPy-ism (was not part of origin Numeric
+               // interface.)
                if (pyarr->descr->elsize == 1)
                   goto case_PyArray_CHAR;
                else {
@@ -310,7 +311,6 @@ namespace pytave {
                }
             }
             break;
-#endif
          case PyArray_OBJECT:
             pyarrobj_to_octvalueNd<Cell>(octvalue, pyarr, dims);
             break;

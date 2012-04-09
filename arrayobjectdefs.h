@@ -29,16 +29,11 @@
 #endif
 #define PY_ARRAY_UNIQUE_SYMBOL pytave_array_symbol
 #include <Python.h>
-#ifdef HAVE_NUMPY
+/* We use the oldnumeric.h header files because pytave was originally written
+   for the Numeric array library, which has since then been deprecated.  We use
+   the NumPy compability headers. */
 #include <numpy/oldnumeric.h>
 #include <numpy/old_defines.h>
-// Avoid deprecation warnings from NumPy
-#undef PyArray_FromDims 
-#define PyArray_FromDims PyArray_SimpleNew
-#else
-#include <Numeric/arrayobject.h>
-typedef int npy_intp;
-#endif
 
 /* Emacs
  * Local Variables:

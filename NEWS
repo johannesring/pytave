@@ -1,5 +1,12 @@
 Version 0.1.1-bzr 
 
+2012-04-09
+
+* Removed Numeric array support.  The Numeric array Python library is
+  deprecated.  Pytave has used numpy and its extensions since several
+  years ago and it was time to reduce the effort to support both
+  libraries.
+
 2009-05-25
 
 * Added functionality for explicit manipulation of variables.

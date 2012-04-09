@@ -1,5 +1,16 @@
 2012-04-09  David Grundberg  <individ@acc.umu.se>
 
+	* configure.ac: Remove ability to select Numeric array library.
+	* octave_to_python.cc: Assume we use numpy, remove ifdefs for
+	numeric.
+	* python_to_octave.cc: Assume we use numpy.
+	* ax_python_numpy.m4: Remove file.
+	* arrayobjectdefs.h: Remove numeric specific code.
+	* pytave.cc (pytave::get_module_name): Remove function.
+	* package/pytave.py: Use only numpy.
+
+2012-04-09  David Grundberg  <individ@acc.umu.se>
+
 	* octave_to_python.cc, python_to_octave.cc, pytave.cc: Undef
 	HAVE_STAT and HAVE_FSTAT consistently through-out all files.
 

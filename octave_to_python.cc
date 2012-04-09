@@ -119,7 +119,7 @@ namespace pytave {
          dimensions[i] = dims(i);
       }
 
-      return (PyArrayObject *)PyArray_FromDims(
+      return (PyArrayObject *)PyArray_SimpleNew(
          len, dimensions, pyarrtype);
    }
 
@@ -248,15 +248,13 @@ namespace pytave {
             matrix.int8_array_value());
       }
       if (matrix.is_bool_type()) {
-#ifdef HAVE_NUMPY
          // NumPY has logical arrays, and even provides an old-style #define.
          return create_array<bool, boolNDArray>(
             matrix.bool_array_value(), PyArray_BOOL);
-#else
-         // Numeric does not support bools, use uint8.
-         return create_uint_array<uint8NDArray, sizeof(uint8_t)>(
-            matrix.uint8_array_value());
-#endif
+         // Numeric does not support bools, and we used to have uint8 as a
+         // fallback, back when we had support for Numeric.
+         // return create_uint_array<uint8NDArray, sizeof(uint8_t)>(
+         //    matrix.uint8_array_value());
       }
       if (matrix.is_string()) {
          return create_array<char, charNDArray>(

@@ -107,14 +107,9 @@ namespace pytave { /* {{{ */
       // This is actually a macro that becomes a block expression. If an error
       // occurs, e.g. Numeric Array not installed, an exception is set.
       import_array()
-#ifdef HAVE_NUMPY
+
       // Let boost use numpy
       numeric::array::set_module_and_type ("numpy", "ndarray");
-#endif
-   }
-
-   string get_module_name () {
-      return numeric::array::get_module_name ();
    }
 
    boost::python::tuple get_exceptions() {
@@ -394,7 +389,6 @@ BOOST_PYTHON_MODULE(_pytave) { /* {{{ */
    using namespace boost::python;
 
    def("init", pytave::init);
-   def("get_module_name", pytave::get_module_name);
    def("feval", pytave::func_eval);
    def("eval", pytave::str_eval);
    def("getvar", pytave::getvar);

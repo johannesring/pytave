@@ -6,23 +6,29 @@ AC_INIT(pytave, dev, [[https://bugs.launchpad.net/pytave]])
 
 AC_ARG_WITH(numpy,
 	      [AS_HELP_STRING([--with-numpy],
-			      [use NumPy module (experimental)
+			      [use NumPy module (you have no choice)
 			      @<:@default=yes@:>@])],
 			      [pytave_enable_numpy="$withval"],
 			      [pytave_enable_numpy=yes])
 
 AC_ARG_WITH(numeric,
 	      [AS_HELP_STRING([--with-numeric],
-			      [use legacy Numeric module. NumPy must be disabled.
+			      [Pytave used to be able to use Numeric
+			      module, support has since then
+			      been removed.
 			      @<:@default=no@:>@])],
 			      [pytave_enable_numeric="$withval"],
 			      [pytave_enable_numeric=no])
 
 # Check for bad arguments.
-AS_IF(test "x$pytave_enable_numpy" = "xyes" -a "x$pytave_enable_numeric" = "xyes" -o dnl
-"x$pytave_enable_numpy" = "xno" -a "x$pytave_enable_numeric" = "xno", 
+AS_IF(test "x$pytave_enable_numeric" = "xyes",
 [
-	AC_ERROR([NumPy or Numeric: select one.])
+	AC_ERROR([numeric: This library is no longer supported.])
+])
+
+AS_IF(test "x$pytave_enable_numpy" != "xyes",
+[
+	AC_ERROR([numpy: This library is required.])
 ])
 
 # Some important programs.
@@ -47,28 +53,13 @@ AX_OCTAVE([OCTAVE_CONFIG], [], [addmissing([Octave development files])])
 # Pick a Python library to use
 AX_PYTHON_DEVEL([], [], [addmissing([Python development files])])
 
-# Select Python matrix interface, prefer numpy.
-AS_IF(test "x$pytave_enable_numpy" = "xno",
+# Look for numpy headers
+AX_PYTHON_NUMPY(
 [
-	pytave_matrix_interface="numeric"
+    AC_DEFINE([HAVE_NUMPY], 1, [Define if using NumPy])
 ],
 [
-	pytave_matrix_interface="numpy"
-])
-
-# Look for selected matrix interface
-AS_IF(test "$pytave_matrix_interface" = "numpy",
-[
-   AX_PYTHON_NUMPY(
-   [
-       AC_DEFINE([HAVE_NUMPY], 1, [Define if using NumPy])
-   ],
-   [
-       addmissing([NumPy development files])
-   ])
-],
-[
-   AX_PYTHON_NUMERIC([], [addmissing([Numeric development files])])
+    addmissing([NumPy development files])
 ])
 
 # Look for boost::python
@@ -167,7 +158,6 @@ Dependencies
   Python boost ....... $BOOST_PYTHON_LIB
 
 Features
-  matrix interface ... $pytave_matrix_interface
   uselocale .......... $pytave_have_uselocale
 
 ========================================================================])

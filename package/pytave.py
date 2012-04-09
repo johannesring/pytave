@@ -38,17 +38,7 @@ _pytave.init(interactive)
 (OctaveError, ValueConvertError, ObjectConvertError, ParseError, \
  VarNameError) = _pytave.get_exceptions();
 
-# Dynamic import. *Must* go after _pytave.init() !
-__modname__ = _pytave.get_module_name()
-if __modname__ == 'numpy':
-    from numpy import oldnumeric as Numeric
-elif __modname__ == 'Numeric':
-    import Numeric
-elif __modname__ == 'numarray':
-    # FIXME: Is this OK?
-    import numarray as Numeric
-else:
-    raise ImportError("Failed to import module: %s" % __modname__)
+from numpy import oldnumeric as Numeric
 
 def _atexit():
 	_pytave.atexit()
