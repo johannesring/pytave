@@ -170,14 +170,15 @@ namespace pytave {
       }
 
       switch (type_num) {
-         ARRAYCASE(PyArray_CHAR,            char)
-         ARRAYCASE(PyArray_UBYTE,  unsigned char)
-         ARRAYCASE(PyArray_SBYTE,  signed   char)
-         ARRAYCASE(PyArray_SHORT,  signed   short)
-         ARRAYCASE(PyArray_USHORT, unsigned short)
-         ARRAYCASE(PyArray_INT,    signed   int)
-         ARRAYCASE(PyArray_UINT,   unsigned int)
-         ARRAYCASE(PyArray_LONG,   signed   long)
+         ARRAYCASE(PyArray_CHAR,              char)
+         ARRAYCASE(PyArray_UBYTE,    unsigned char)
+         ARRAYCASE(PyArray_SBYTE,    signed   char)
+         ARRAYCASE(PyArray_SHORT,    signed   short)
+         ARRAYCASE(PyArray_USHORT,   unsigned short)
+         ARRAYCASE(PyArray_INT,      signed   int)
+         ARRAYCASE(PyArray_UINT,     unsigned int)
+         ARRAYCASE(PyArray_LONG,     signed   long)
+         ARRAYCASE(PyArray_LONGLONG, signed   long long)
 
          /* Commonly Numeric.array(..., Numeric.Float32) */
          ARRAYCASE(PyArray_FLOAT,  float)
@@ -253,6 +254,7 @@ namespace pytave {
          case PyArray_SHORT:
          case PyArray_INT:
          case PyArray_LONG:
+         case PyArray_LONGLONG:
             switch (pyarr->descr->elsize) {
                case 1:
                   pyarrobj_to_octvalueNd<int8NDArray>(octvalue, pyarr, dims);
