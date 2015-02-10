@@ -34,6 +34,9 @@ setup(
          # The file separator might be wrong. (Must be / in setup.cfg)
          include_dirs = ['@OCTAVE_INCLUDEDIR@',
                         '@NUMPY_INCLUDEDIR@',
+                        # FIXME: Do not hardcode path to hdf5 include dir
+                        '/usr/include/hdf5/openmpi',
+                        '/usr/include/hdf5/serial',
                         '@abs_builddir@',
                         '@srcdir@',
                         ],

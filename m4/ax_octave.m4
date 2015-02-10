@@ -145,7 +145,8 @@ This could be a sign that the Octave development package is missing.
 
 		OCTAVE_LDFLAGS="-L$OCTAVE_LIBRARYDIR"
 		OCTAVE_LIBS="-loctave -loctinterp"
-		OCTAVE_CPPFLAGS="-I$OCTAVE_INCLUDEDIR"
+		# FIXME: Do not hardcode path to hdf5 include dir
+		OCTAVE_CPPFLAGS="-I$OCTAVE_INCLUDEDIR -I/usr/include/hdf5/openmpi -I/usr/include/hdf5/serial"
 
 		AC_CACHE_CHECK([whether linking to Octave works], [ax_octave_cv_lib_octave],
 		[
