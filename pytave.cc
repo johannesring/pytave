@@ -374,7 +374,7 @@ namespace pytave { /* {{{ */
 #endif
 
       Py_BEGIN_ALLOW_THREADS
-      do_octave_atexit();
+      clean_up_and_exit(0);
       Py_END_ALLOW_THREADS
 
 #ifdef HAVE_USELOCALE
