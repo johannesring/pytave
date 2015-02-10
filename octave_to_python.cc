@@ -164,7 +164,7 @@ namespace pytave {
          return create_array<unsigned short, CLASS>(value, PyArray_USHORT, inst);
       } else {
          ostringstream os;
-         os << "Numeric arrays does not support unsigned " << (bytes*8)
+         os << "Numeric arrays doesn't support unsigned " << (bytes*8)
             << "-bit values on this architecture.";
          throw value_convert_exception(os.str());
       }
@@ -177,15 +177,9 @@ namespace pytave {
          // same size.
          boost::integral_constant<bool, bytes == sizeof(int)> inst;
          return create_array<signed int, CLASS>(value, PyArray_INT, inst);
-      }
-      // PyArray_LONGLONG does not exist (AFAIR) in legacy Numeric arrays, but
-      // Numpy is kind enough to provide us with the old-style defines.
-      else if (bytes == sizeof(long long)) {
-         boost::integral_constant<bool, bytes == sizeof(long long) && bytes != sizeof(int)> inst;
-         return create_array<long long, CLASS>(value, PyArray_LONGLONG, inst);
-      }
-      else if (bytes == sizeof(long)) {
-         boost::integral_constant<bool, bytes == sizeof(long) && bytes != sizeof(int) && bytes != sizeof(long long)> inst;
+      } else if (bytes == sizeof(long)) {
+         boost::integral_constant<bool,
+            bytes==sizeof(long) && bytes != sizeof(int)> inst;
          return create_array<long, CLASS>(value, PyArray_LONG, inst);
       } else if (bytes == sizeof(char)) {
          boost::integral_constant<bool, bytes == sizeof(char)> inst;
