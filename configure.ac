@@ -126,7 +126,6 @@ AC_SUBST(PYTAVE_MODULE_INSTALL_PATH)
 
 # Substitutes for the Jamfile. XXX: Replace lib*.so with OS independent name.
 AC_SUBST(JAM_LIBOCTAVE, $OCTAVE_LIBRARYDIR/liboctave.so)
-AC_SUBST(JAM_LIBCRUFT, $OCTAVE_LIBRARYDIR/libcruft.so)
 AC_SUBST(JAM_LIBOCTINTERP, $OCTAVE_LIBRARYDIR/liboctinterp.so)
 
 # setup.py

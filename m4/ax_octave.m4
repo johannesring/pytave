@@ -144,7 +144,7 @@ This could be a sign that the Octave development package is missing.
 		fi
 
 		OCTAVE_LDFLAGS="-L$OCTAVE_LIBRARYDIR"
-		OCTAVE_LIBS="-loctave -lcruft -loctinterp"
+		OCTAVE_LIBS="-loctave -loctinterp"
 		OCTAVE_CPPFLAGS="-I$OCTAVE_INCLUDEDIR"
 
 		AC_CACHE_CHECK([whether linking to Octave works], [ax_octave_cv_lib_octave],
