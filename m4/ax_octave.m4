@@ -93,7 +93,7 @@ AC_DEFUN([AX_OCTAVE],[
 
 	AS_IF([test -n "$ax_octave_config"], [
 		AC_MSG_CHECKING([for Octave library path])
-		OCTAVE_LIBRARYDIR=`$ax_octave_config -p OCTLIBDIR`
+		OCTAVE_LIBRARYDIR=`$ax_octave_config -p LIBDIR`
 		AC_MSG_RESULT([$OCTAVE_LIBRARYDIR])
 
 		AC_MSG_CHECKING([for Octave include path])
